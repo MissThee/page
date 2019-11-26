@@ -13,13 +13,12 @@
   </div>
 </template>
 <script>
-  import Global from 'src/utils/global';
 
   export default {
     name: 'MarkDownArea',
 
     props: {
-      filePath: {
+      fileUrl: {
         type: String,
         default: '',
       },
@@ -79,7 +78,8 @@
     },
     created() {
       const Http = new XMLHttpRequest();
-      Http.open('GET', Global.GITHUB_API_HOST + this.filePath);
+      Http.open('GET', this.fileUrl);
+
       Http.send();
       Http.onreadystatechange = () => {
         if (Http.readyState === 4 && Http.status === 200) {
