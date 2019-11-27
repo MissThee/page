@@ -20,7 +20,7 @@
             <span title="下载" style="width: 2em;display: inline-block">
                 <el-button
                   v-loading="node.loading"
-                  v-if="data.download_url&&data.download_url!==''"
+                  v-if="data.download_url&&data.download_url.length>0"
                   style="color:#e6a23c;"
                   plain
                   size="mini"
@@ -28,24 +28,27 @@
                   <i class="el-icon-download"></i>
                 </el-button>
             </span>
+             <span title="原文件链接" style="width: 2em;display: inline-block">
+                <el-button
+                  style="color:#555555;"
+                  v-if="data.download_url&&data.download_url.length>0"
+                  plain
+                  size="mini">
+                  <a :href="data.download_url" target="_blank">
+                    <i class="el-icon-link"></i>
+                  </a>
+                </el-button>
+            </span>
             <span title="前往github查看" style="width: 2em;display: inline-block">
                 <el-button
                   style="color:#409eff;"
                   plain
-                  size="mini"
-                  @click="() => {openWindowHandler(data.html_url);}">
-                   <i class="el-icon-top-right"></i>
+                  size="mini">
+                   <a :href="data.html_url" target="_blank">
+                    <i class="el-icon-top-right"></i>
+                   </a>
                 </el-button>
-            </span>
-             <span title="原文件链接" style="width: 2em;display: inline-block">
-                <el-button
-                  style="color:#555555;"
-                  plain
-                  size="mini"
-                  @click="() => {openWindowHandler(data.download_url);}">
-                  <i class="el-icon-link"></i>
-                </el-button>
-            </span>
+             </span>
           </span>
         </span>
         </el-tree>
@@ -158,9 +161,6 @@
               break;
           }
         }
-      },
-      openWindowHandler(url) {
-        window.open(url);
       },
       switchEdit() {
         this.$refs.md.switchEdit();
