@@ -306,8 +306,7 @@
           token: this.token,
           url: this.currentMdEditorFile.url,
           sha: this.currentMdEditorFile.sha,
-          content: window.btoa(this.currentMdEditorFileValue)
-
+          content: Base64.toBase64(this.currentMdEditorFileValue),
         })
           .then((result) => {
             if (result.status === 200) {
@@ -335,7 +334,7 @@
               this.currentMdEditorFileSaveButtonLoading = false;
             }, 1000);
           });
-      }
+      },
     },
     watch: {
       filterText(val) {

@@ -30,9 +30,9 @@ let interval;
 
 // request拦截器，请求发送前修改发送内容
 request.interceptors.request.use((request) => {
-  if(Global.TOKEN&&Global.TOKEN.length>0) {
-    request.headers.authorization = 'token ' + Global.TOKEN;
-  }
+    if (!request.headers.Authorization && Global.TOKEN && Global.TOKEN.length > 0) {
+      request.headers.Authorization = 'token ' + Global.TOKEN;
+    }
     return request;
   }, error => {
     if (requestErrorNotiTime === 0) {
