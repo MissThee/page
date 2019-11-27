@@ -27,7 +27,12 @@ module.exports = {
         'src': resolve('./src')
       }
     },
-    externals: {},
+    externals: {
+      'vue': 'Vue',
+      'vue-router': 'VueRouter',
+      'vuex': 'Vuex',
+      'element-ui': 'ELEMENT',
+    },
     devtool: process.env.NODE_ENV === 'development' ? 'inline-source-map' : 'none'
   },
 };
