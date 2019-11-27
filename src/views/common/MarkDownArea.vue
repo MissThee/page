@@ -9,7 +9,7 @@
       :toolbarsFlag="editorOptions.toolbarsFlag"
       :shortCut="editorOptions.shortCut"
       :toolbars="toolbars"
-      @save="copyToClipboard"
+      @save="save"
       v-model="mdText"/>
     <!--    <pre style="position: absolute;top:0;left:0;width: 100%;z-index: 0" ref="md" id="md">{{mdText}}</pre>-->
   </div>
@@ -99,6 +99,9 @@
         this.editorOptions.editable = !this.editorOptions.editable;
         this.editorOptions.toolbarsFlag = !this.editorOptions.toolbarsFlag;
         this.editorOptions.subfield = !this.editorOptions.subfield;
+      },
+      save(value){
+        this.$emit('save',value)
       },
       copyToClipboard(text) {
         let textArea = document.createElement('textarea');

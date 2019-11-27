@@ -33,7 +33,7 @@
         let matched = this.$route.matched.filter(item => item.meta.title);
         const first = matched[0];
         if (first && !first.meta.isHomePage) {
-          matched = [{ path: '/', meta: { title: '预览编辑' } }].concat(matched);
+          matched = [{ path: '/', meta: { title: '文件查看' } }].concat(matched);
         }
         this.levelList = matched;
       }

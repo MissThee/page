@@ -7,7 +7,7 @@ export default [
   {
     path: '/',
     component: () => import('src/views/layout/Layout'),
-    meta: { isHomePage:true, hidden: false, title: '预览编辑' },
+    meta: { isHomePage:true, hidden: false, title: '文件查看' },
     children: [{
       path: '/home',
       name: 'home',

@@ -4,11 +4,7 @@ import { Notification } from 'element-ui';
 const tokenKey = 'Admin-Token';
 
 export function getToken() {
-  let token = Cookies.get(tokenKey);
-  if (token === undefined || token === null || token.length === 0) {
-    noAuth();
-  }
-  return token;
+  return Cookies.get(tokenKey);
 }
 
 export function setToken(value) {

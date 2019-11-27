@@ -28,7 +28,6 @@ const SimpleAutoHeightTable = {
         for (let i = 0; i < reduceHeightElements.length; i++) {
           reduceHeight += reduceHeightElements[i].offsetHeight;
         }
-        console.log('reduceHeight!!!',reduceHeight)
         this.tableAutoHeight = val - reduceHeight;
       });
     },
