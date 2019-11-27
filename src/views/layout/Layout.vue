@@ -3,7 +3,7 @@
     <el-container>
       <NavBar style="position:absolute;top:0;left:0;width:100%;height: 50px;border-bottom:1px solid #BFBFBF;overflow: hidden;box-sizing: border-box" ref="NavBar"></NavBar>
       <TagsBar v-show="isShowNavBar" style="position:absolute;top:50px;left:0;right:0;height: 30px" v-if="true" ref="TagsBar"></TagsBar>
-      <div style="position:absolute;top:50px;left:0;right:0;bottom: 0;overflow-x: hidden" ref="Content">
+      <div style="position:absolute;top:50px;bottom:0;left:0;right:0;overflow-x: hidden" ref="Content">
         <transition name="fade" mode="out-in">
           <keep-alive>
             <router-view></router-view>
@@ -34,19 +34,12 @@
     },
     created() {
       this.$nextTick(() => {//初始化时设置高度
-        if (this.isShowNavBar) {
-          this.$refs.Content.style.top = Number(this.$refs.Content.style.top.replace('px', '')) + this.$refs.TagsBar.$el.offsetHeight + 'px';
-        }
-        this.setContentHeight(window.innerHeight - this.$refs.NavBar.$el.offsetHeight - this.$refs.TagsBar.$el.offsetHeight);
-        this.setContentWidth(window.innerWidth);
+        this.setHeightAndWidth();
       });
       window.onresize = () => {//窗口大小改变设置高度，限制更新频率
         if (this.timer) {
-          if (isShowNavBar) {
-            this.$refs.Content.style.top = Number(this.$refs.Content.style.top.replace('px', '')) + this.$refs.TagsBar.$el.offsetHeight + 'px';
-          }
-          this.setContentHeight(window.innerHeight - this.$refs.NavBar.$el.offsetHeight - this.$refs.TagsBar.$el.offsetHeight);
-          this.setContentWidth(window.innerWidth);
+          this.setHeightAndWidth();
+          this.timer = false;
           setTimeout(() => {
             this.timer = true;
           }, 16);
@@ -54,6 +47,13 @@
       };
     },
     methods: {
+      setHeightAndWidth(){
+        if (this.isShowNavBar) {
+          this.$refs.Content.style.top = Number(this.$refs.Content.style.top.replace('px', '')) + this.$refs.TagsBar.$el.offsetHeight + 'px';
+        }
+        this.setContentHeight(window.innerHeight - this.$refs.NavBar.$el.offsetHeight - this.$refs.TagsBar.$el.offsetHeight);
+        this.setContentWidth(window.innerWidth);
+      },
       ...mapMutations({
         setContentHeight: mutation.SET_CONTENT_HEIGHT,
         setContentWidth: mutation.SET_CONTENT_WIDTH,

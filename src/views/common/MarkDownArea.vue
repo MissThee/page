@@ -1,6 +1,7 @@
 <template>
   <div>
     <mavon-editor
+      :style="{height:height===0?'auto':height+'px'}"
       :editable="editorOptions.editable"
       :subfield="editorOptions.subfield"
       :defaultOpen="editorOptions.defaultOpen"
@@ -8,6 +9,7 @@
       :toolbarsFlag="editorOptions.toolbarsFlag"
       :shortCut="editorOptions.shortCut"
       :toolbars="toolbars"
+      @save="copyToClipboard"
       v-model="mdText"/>
     <!--    <pre style="position: absolute;top:0;left:0;width: 100%;z-index: 0" ref="md" id="md">{{mdText}}</pre>-->
   </div>
@@ -16,11 +18,14 @@
 
   export default {
     name: 'MarkDownArea',
-
     props: {
       fileUrl: {
         type: String,
         default: '',
+      },
+      height:{
+        type:Number,
+        default:0,
       },
       editorOptions: {
         type: Object,
@@ -31,7 +36,7 @@
             defaultOpen: 'preview',
             placeholder: '',
             toolbarsFlag: false,
-            shortCut: false,
+            shortCut: true,
           };
         }
       }
@@ -63,7 +68,7 @@
           undo: true, // 上一步
           redo: true, // 下一步
           trash: true, // 清空
-          // save: true, // 保存（触发events中的save事件）
+          save: true, // 保存（触发events中的save事件）
           /* 1.4.2 */
           navigation: true, // 导航目录
           /* 2.1.8 */
@@ -77,22 +82,55 @@
       };
     },
     created() {
-      const Http = new XMLHttpRequest();
-      Http.open('GET', this.fileUrl);
-
-      Http.send();
-      Http.onreadystatechange = () => {
-        if (Http.readyState === 4 && Http.status === 200) {
-          this.mdText = Http.responseText;
-        }
-      };
+      this.initMd();
     },
     methods: {
+      initMd() {
+        const Http = new XMLHttpRequest();
+        Http.open('GET', this.fileUrl);
+        Http.send();
+        Http.onreadystatechange = () => {
+          if (Http.readyState === 4 && Http.status === 200) {
+            this.mdText = Http.responseText;
+          }
+        };
+      },
       switchEdit() {
         this.editorOptions.editable = !this.editorOptions.editable;
-        this.editorOptions.shortCut = !this.editorOptions.shortCut;
         this.editorOptions.toolbarsFlag = !this.editorOptions.toolbarsFlag;
         this.editorOptions.subfield = !this.editorOptions.subfield;
+      },
+      copyToClipboard(text) {
+        let textArea = document.createElement('textarea');
+        textArea.style.position = 'fixed';
+        textArea.style.top = '0';
+        textArea.style.left = '0';
+        textArea.style.width = '2em';
+        textArea.style.height = '2em';
+        textArea.style.padding = '0';
+        textArea.style.border = 'none';
+        textArea.style.outline = 'none';
+        textArea.style.boxShadow = 'none';
+        textArea.style.background = 'transparent';
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+
+        try {
+          let successful = document.execCommand('copy');
+          this.$notify({
+            title: successful ? '成功复制到剪贴板' : '该浏览器不支持点击复制到剪贴板',
+            type: successful ? 'success' : 'warning',
+            duration: 2000,
+          });
+        } catch (err) {
+          this.$notify({
+            title: '不支持点击复制到剪贴板',
+            type: 'warning',
+            duration: 2000,
+          });
+        }
+        document.body.removeChild(textArea);
       }
     }
   };

@@ -7,7 +7,7 @@ const SimpleAutoHeightTable = {
     };
   },
   created() {
-    this.setTableHeight(this.contentHeight);
+    this.initSize();
   },
   watch: {
     contentHeight(val) {
@@ -18,6 +18,9 @@ const SimpleAutoHeightTable = {
     },
   },
   methods: {
+    initSize(){
+      this.setTableHeight(this.contentHeight);
+    },
     setTableHeight(val) {
       this.$nextTick(() => {
         let reduceHeight = 0;//记录需要减去的高度
@@ -25,6 +28,7 @@ const SimpleAutoHeightTable = {
         for (let i = 0; i < reduceHeightElements.length; i++) {
           reduceHeight += reduceHeightElements[i].offsetHeight;
         }
+        console.log('reduceHeight!!!',reduceHeight)
         this.tableAutoHeight = val - reduceHeight;
       });
     },
