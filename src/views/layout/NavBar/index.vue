@@ -21,8 +21,11 @@
       <router-link class="link-button" to="/home">
         <el-button>主页</el-button>
       </router-link>
-      <router-link class="link-button" to="/">
+      <router-link class="link-button" to="/md">
         <el-button>文档</el-button>
+      </router-link>
+      <router-link class="link-button" to="/setting">
+        <el-button>设置</el-button>
       </router-link>
     </div>
   </el-header>

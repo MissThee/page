@@ -68,7 +68,7 @@
     <div v-if="!isShowTree" style="text-align: center">
       <div class="reduce-height-element">
         <div>
-          <el-button type="warning" size="mini" plain @click="isShowTree=true" icon="el-icon-arrow-left">返回列表</el-button>
+          <el-button type="warning" size="mini" plain @click="backToTreeHandler" icon="el-icon-arrow-left">返回列表</el-button>
           <el-button type="primary" size="mini" plain @click="switchEdit" icon="el-icon-edit">编辑/预览</el-button>
         </div>
         <div>
@@ -76,11 +76,11 @@
         </div>
       </div>
       <mark-down-area @save="preSaveMdFile" :height="tableAutoHeight" ref="md" :file-url="currentMdEditorFile.download_url"></mark-down-area>
+      <el-dialog style="text-align: center" :close-on-click-modal="false" :visible.sync="isShowPreSaveMdFileDialog" append-to-body title="提交">
+        <el-input placeholder="personal access token (保存在本地cookie)" v-model="token"></el-input>
+        <el-button :loading="currentMdEditorFileSaveButtonLoading" style="margin-top: 10px" type="primary" plain size="small" @click="sendSaveMdFile">确定</el-button>
+      </el-dialog>
     </div>
-    <el-dialog style="text-align: center" :close-on-click-modal="false" :visible.sync="isShowPreSaveMdFileDialog" append-to-body title="提交">
-      <el-input placeholder="personal access token (保存在本地cookie)" v-model="token"></el-input>
-      <el-button :loading="currentMdEditorFileSaveButtonLoading" style="margin-top: 10px" type="primary" plain size="small" @click="sendSaveMdFile">确定</el-button>
-    </el-dialog>
   </div>
 </template>
 <script>
@@ -335,6 +335,10 @@
             }, 1000);
           });
       },
+      backToTreeHandler() {
+        this.isShowTree = true;
+        this.initSize();
+      }
     },
     watch: {
       filterText(val) {

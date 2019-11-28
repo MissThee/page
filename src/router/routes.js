@@ -8,16 +8,22 @@ export default [
     path: '/',
     component: () => import('src/views/layout/Layout'),
     meta: { isHomePage:true, hidden: false, title: '文件查看' },
+    redirect:'/md',
     children: [{
       path: '/home',
       name: 'home',
       component: () => import('src/views/content/home/Home'),
       meta: { title: '主页', tabCanClose: false },
     },{
-      path: '/',
+      path: '/md',
       name: 'md',
       component: () => import('src/views/content/md/MarkdownDoc'),
       meta: { title: '文档', tabCanClose: false },
+    },{
+      path: '/setting',
+      name: 'setting',
+      component: () => import('src/views/content/setting/Setting'),
+      meta: { title: '设置', tabCanClose: false },
     }],
   },
 

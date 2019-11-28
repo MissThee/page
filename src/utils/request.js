@@ -1,6 +1,8 @@
 import Global from 'src/utils/global';
 import axios from 'axios';
 import { Notification } from 'element-ui';
+import { getToken } from 'src/utils/cookies';
+
 // 创建实例
 const request = axios.create({
   // baseURL: `${Global.HOST}`,
@@ -30,8 +32,9 @@ let interval;
 
 // request拦截器，请求发送前修改发送内容
 request.interceptors.request.use((request) => {
-    if (!request.headers.Authorization && Global.TOKEN && Global.TOKEN.length > 0) {
-      request.headers.Authorization = 'token ' + Global.TOKEN;
+    let token = getToken();
+    if (!request.headers.Authorization && token) {
+      request.headers.Authorization = 'token ' + token;
     }
     return request;
   }, error => {
