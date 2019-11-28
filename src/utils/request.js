@@ -1,13 +1,15 @@
 import Global from 'src/utils/global';
 import axios from 'axios';
 import { Notification } from 'element-ui';
-import { getToken } from 'src/utils/cookies';
+import Cookie from 'src/utils/cookies';
 
 // 创建实例
 const request = axios.create({
   // baseURL: `${Global.HOST}`,
+  withCredentials: false,
   timeout: 60000,
 });
+request.defaults.withCredentials = false;
 let requestErrorNotiTime = 0;
 let responseErrorNotiTime = 0;
 const errorNotiMinTime = 2;//错误提示出现的最小间隔
@@ -32,8 +34,8 @@ let interval;
 
 // request拦截器，请求发送前修改发送内容
 request.interceptors.request.use((request) => {
-    let token = getToken();
-    if (!request.headers.Authorization && token) {
+    let token = Cookie.token.getTokenValue();
+    if (token) {
       request.headers.Authorization = 'token ' + token;
     }
     return request;
@@ -46,6 +48,7 @@ request.interceptors.request.use((request) => {
         message: error,
         type: 'error'
       });
+      return Promise.reject(error);
     }
   }
 );
@@ -62,6 +65,7 @@ request.interceptors.response.use((response) => {
         message: error,
         type: 'error'
       });
+      return Promise.reject(error);
     }
   }
 );

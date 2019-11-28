@@ -19,13 +19,17 @@
   export default {
     name: 'MarkDownArea',
     props: {
+      mdText:{
+        type: String,
+        default: '',
+      },
       fileUrl: {
         type: String,
         default: '',
       },
-      height:{
-        type:Number,
-        default:0,
+      height: {
+        type: Number,
+        default: 0,
       },
       editorOptions: {
         type: Object,
@@ -43,7 +47,6 @@
     },
     data() {
       return {
-        mdText: '',
         toolbars: {
           bold: true, // 粗体
           italic: true, // 斜体
@@ -82,10 +85,13 @@
       };
     },
     created() {
-      this.initMd();
+      if (this.fileUrl && this.fileUrl !== '') {
+        console.log("fileUrl",this.fileUrl)
+        this.initMdByUrl();
+      }
     },
     methods: {
-      initMd() {
+      initMdByUrl() {
         const Http = new XMLHttpRequest();
         Http.open('GET', this.fileUrl);
         Http.send();
@@ -100,8 +106,8 @@
         this.editorOptions.toolbarsFlag = !this.editorOptions.toolbarsFlag;
         this.editorOptions.subfield = !this.editorOptions.subfield;
       },
-      save(value){
-        this.$emit('save',value)
+      save(value) {
+        this.$emit('save', value);
       },
       copyToClipboard(text) {
         let textArea = document.createElement('textarea');

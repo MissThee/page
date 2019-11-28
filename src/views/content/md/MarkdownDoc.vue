@@ -2,9 +2,15 @@
   <div style="margin:0 10%;">
     <div v-show="isShowTree">
       <div class="reduce-height-element">
-        <span class="tool-bar-label">初始目录深度(1开始，0为不限):</span>
-        <el-input-number size="mini" :min="0" :max="99999" label="" v-model="treeDeep"></el-input-number>
-        <el-button type="primary" size="small" style="margin-left:10px" plain @click="initTreeData">加载列表</el-button>
+        <el-tag type="info" size="large" style="color:#555;font-weight: bolder">初始目录深度(0不限):
+          <el-input-number size="mini" :min="0" :max="99999" label="" v-model="treeDeep"></el-input-number>
+          <el-button type="primary" size="small" style="margin-left:10px" plain @click="initTreeData">加载列表</el-button>
+        </el-tag>
+        <div style="float: right">
+          <el-tag type="info" size="large" @click="isShowTree=true" style="color:#555;font-weight: bolder">已设置目录:</el-tag>
+          <el-tag type="info" size="large" @click="isShowTree=true" style="color:#555;font-weight: bolder">{{currentSettingValue.repository}}</el-tag>
+          <el-tag type="info" size="large" @click="isShowTree=true" style="color:#555;font-weight: bolder">{{currentSettingValue.docRoot}}</el-tag>
+        </div>
         <el-input class="reduce-height-element" placeholder="输入关键字进行过滤" v-model="filterText"></el-input>
       </div>
       <div ref="treeArea" style="overflow: scroll" :style="{height: tableAutoHeight+'px'}">
@@ -72,7 +78,7 @@
           <el-button type="primary" size="mini" plain @click="switchEdit" icon="el-icon-edit">编辑/预览</el-button>
         </div>
         <div>
-          <el-button type="info" disabled size="mini" plain @click="isShowTree=true" style="color:#555;cursor: default">当前文档：{{decodeURI(currentMdEditorFile.path)}}</el-button>
+          <el-tag type="info" size="mini" @click="isShowTree=true" style="color:#555;font-weight: bolder">当前文档：{{decodeURI(currentMdEditorFile.path)}}</el-tag>
         </div>
       </div>
       <mark-down-area @save="preSaveMdFile" :height="tableAutoHeight" ref="md" :file-url="currentMdEditorFile.download_url"></mark-down-area>
@@ -86,9 +92,9 @@
 <script>
   import MarkDownArea from 'src/views/common/MarkDownArea';
   import MdApi from 'src/api/md-api';
-  import Global from 'src/utils/global';
   import SimpleAutoHeightTable from 'src/mixin/SimpleAutoHeightTable';
-  import { setToken, getToken } from 'src/utils/cookies';
+  import Cookie from 'src/utils/cookies';
+  import { mapGetters, mapActions } from 'vuex';
 
   export default {
     name: 'MarkdownDoc',
@@ -98,7 +104,10 @@
     },
     data() {
       return {
-
+        currentSettingValue: {
+          repository: '',
+          docRoot: '',
+        },
         currentMdEditorFileValue: '',
         isShowPreSaveMdFileDialog: false,
         token: '',
@@ -123,14 +132,29 @@
     created() {
       this.$nextTick(() => {
         this.$refs.treeArea.addEventListener('scroll', this.treeAreaScrollHandler);
-        this.initTreeData();
       });
+    },
+    activated() {
+      if (!Cookie.token.getTokenValue()) {
+        this.$notify({
+          type: 'error',
+          title: '需要先设置授权信息',
+          message: '先到“设置”里登录，或设置token'
+        });
+        this.$router.push('/setting');
+        return;
+      }
+      if (this.currentSettingValue.repository !== Cookie.repository.getRepositoryValue() || this.currentSettingValue.docRoot !== Cookie.docRoot.getDocRootValue()) {
+        this.currentSettingValue.repository = Cookie.repository.getRepositoryValue();
+        this.currentSettingValue.docRoot = Cookie.docRoot.getDocRootValue();
+        this.initTreeData();
+      }
     },
     methods: {
       initTreeData() {
         this.treeData = [];
         this.defaultExpandedKeys = [];
-        this.requestTreeData(Global.GITHUB_API_HOST + '/repos/' + Global.USER + '/' + Global.REPOSITORY + '/contents' + Global.DOC_ROOT, this.treeData, undefined, this.treeDeep);
+        this.requestTreeData('https://api.github.com/repos/' + this.getUser.login + '/' + Cookie.repository.getRepositoryValue() + '/contents' + Cookie.docRoot.getDocRootValue(), this.treeData, undefined, this.treeDeep);
       },
       requestTreeData(url, treeData, nodeDeep, limitDeep) {
         nodeDeep = nodeDeep || 0;
@@ -290,7 +314,7 @@
         return 0;
       },
       preSaveMdFile(value) {
-        let tokenInCookie = getToken();
+        let tokenInCookie = Cookie.token.getTokenValue();
         if (tokenInCookie) {
           this.token = tokenInCookie;
         }
@@ -299,7 +323,7 @@
 
       },
       sendSaveMdFile() {
-        setToken(this.token);
+        Cookie.token.setTokenValue(this.token);
         this.isShowPreSaveMdFileDialog = false;
         this.currentMdEditorFileSaveButtonLoading = true;
         MdApi.saveMdFile({
@@ -338,7 +362,15 @@
       backToTreeHandler() {
         this.isShowTree = true;
         this.initSize();
-      }
+      },
+
+    },
+    computed: {
+      ...mapGetters({
+        contentHeight: 'getContentHeight',
+        contentWidth: 'getContentWidth',
+        getUser: 'getUser'
+      }),
     },
     watch: {
       filterText(val) {

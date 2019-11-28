@@ -1,25 +1,68 @@
 import Cookies from 'js-cookie';
-import { Notification } from 'element-ui';
+import Global from 'src/utils/global';
 
-const tokenKey = 'Admin-Token';
+const tokenKey = 'tokenKey';
+const repositoryKey = 'repositoryKey';
+const docRootKey = 'docRootKey';
+const userKey = 'userKey';
+const isManualLoginKey = 'isManualLoginKey';
+export default {
+  token: {
+    getTokenValue() {
+      let value = Cookies.get(tokenKey);
+      return !value || value === 'undefined' ? undefined : value;
+    },
+    setTokenValue(value) {
+      return Cookies.set(tokenKey, value, { expires: 10000 });
+    },
+    removeTokenValue() {
+      return Cookies.remove(tokenKey);
+    }
+  },
+  repository: {
+    getRepositoryValue() {
+      let value = Cookies.get(repositoryKey);
 
-export function getToken() {
-  return Cookies.get(tokenKey);
-}
+      return !value || value === 'undefined' ? Global.DEFAULT_REPOSITORY : value;
+    },
+    setRepositoryValue(value) {
+      return Cookies.set(repositoryKey, value, { expires: 10000 });
+    },
+    removeRepositoryValue() {
+      return Cookies.remove(repositoryKey);
+    }
+  },
+  docRoot: {
+    getDocRootValue() {
+      let value = Cookies.get(docRootKey);
+      return !value || value === 'undefined' ? Global.DEFAULT_DOC_ROOT : value;
+    },
+    setDocRootValue(value) {
+      return Cookies.set(docRootKey, value, { expires: 10000 });
+    },
+    removeDocRootValue() {
+      return Cookies.remove(docRootKey);
+    }
+  },
+  user: {
+    getUserValue() {
+      let value = Cookies.get(userKey);
+      return value === 'undefined' ? undefined : value;
+    },
+    setUserValue(value) {
+      return Cookies.set(userKey, value, { expires: 10000 });
+    },
+    removeUserValue() {
+      return Cookies.remove(userKey);
+    }
+  },
+  isManualLogin: {
+    getIsManualLogin() {
+      return Cookies.get(isManualLoginKey);
+    },
+    setIsManualLogin(value) {
+      return Cookies.set(isManualLoginKey, value);
+    },
+  }
+};
 
-export function setToken(value) {
-  return Cookies.set(tokenKey, value);
-}
-
-export function removeToken() {
-  return Cookies.remove(tokenKey);
-}
-
-function noAuth() {
-  Notification({
-    customClass: 'custom-message-box-z-index',//确保不被dialog遮罩层遮盖，样式定义于assets/css/style.css中
-    title: '您尚未登录',
-    message: '请登录以获取更多权限',
-    type: 'error'
-  });
-}
