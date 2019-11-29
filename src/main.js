@@ -10,7 +10,7 @@ import mavonEditor from 'mavon-editor'
 import 'mavon-editor/dist/css/index.css'
 import Base64 from 'js-base64';
 
-
+Vue.config.devtools = true;//使浏览器调试插件可用
 Vue.use(Vuex);
 Vue.use(ElementUI);
 Vue.use(mavonEditor);

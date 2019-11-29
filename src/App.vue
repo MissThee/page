@@ -1,9 +1,9 @@
 <template>
-  <div id="app" style="position: absolute;height: 100%;width:100%;overflow: hidden">
-    <transition :name="transitionName" mode="in-out">
-      <router-view/>
-    </transition>
-  </div>
+  <div id="app" style="height: 100%;">
+      <transition :name="transitionName" mode="in-out">
+        <router-view/>
+      </transition>
+    </div>
 </template>
 
 <script>
@@ -13,6 +13,9 @@
       return {
         transitionName: ''
       };
+    },
+    created() {
+      console.log('process.env.NODE_ENV', process.env.NODE_ENV);
     },
     watch: {
       $route(to, from) {
@@ -35,7 +38,7 @@
   }
 
   .logout-animate-enter-active {
-    animation: fade-in 0.4s ;
+    animation: fade-in 0.4s;
   }
 
   .show-animate-enter-active {

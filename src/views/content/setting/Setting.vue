@@ -62,7 +62,7 @@
         scope: Global.APP.scope,
         getTokenUrl: '',
         token: '',
-        tokenPlaceHolder: 'access_token 值',
+        tokenPlaceHolder: '',
         repository: '',
         repositoryPlaceHolder: Global.DEFAULT_REPOSITORY,
         docRoot: '',
@@ -75,6 +75,7 @@
       } else {
         this.getTokenUrl = 'https://github.com/login/oauth/access_token?client_id=' + Global.APP.client_id + '&client_secret=' + Global.APP.client_secret + '&code=' + this.getAllUrlParams().code;
       }
+      this.setAuthToken();
     },
     activated() {
       this.initSavedValue();
@@ -90,8 +91,6 @@
         this.docRootPlaceHolder = Cookie.docRoot.getDocRootValue();
       },
       setAuthToken() {
-        this.setUser({});
-
         let value = this.token === '' ? this.tokenPlaceHolder : this.token;
         Cookie.token.setTokenValue(value);
         AuthApi.getUserInfo()
@@ -99,7 +98,7 @@
             this.setUser(data);
             this.$notify({
               type: 'success',
-              title: '设置成功',
+              title: '当前用户：' +this.getUser.login,
             });
             this.tokenPlaceHolder = Cookie.token.getTokenValue();
             // window.location.href = window.location.href.split('?')[0];
@@ -221,13 +220,15 @@
         }
         Cookie.token.removeTokenValue();
       },
-      ...mapActions(['setUser'])
+      ...mapActions({
+        setUser: 'user/setUser'
+      })
     },
     computed: {
       ...mapGetters({
-        contentHeight: 'getContentHeight',
-        contentWidth: 'getContentWidth',
-        getUser: 'getUser'
+        contentHeight: 'layout/getContentHeight',
+        contentWidth: 'layout/getContentWidth',
+        getUser: 'user/getUser'
       }),
     },
   };

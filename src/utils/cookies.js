@@ -10,7 +10,11 @@ export default {
   token: {
     getTokenValue() {
       let value = Cookies.get(tokenKey);
-      return !value || value === 'undefined' ? undefined : value;
+      value = !value || value === 'undefined' ? undefined : value;
+      if (!value) {
+        return Global.DEFAULT_TOKEN;
+      }
+      return value;
     },
     setTokenValue(value) {
       return Cookies.set(tokenKey, value, { expires: 10000 });

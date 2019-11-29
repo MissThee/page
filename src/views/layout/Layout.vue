@@ -1,6 +1,5 @@
 <template>
-  <div style="position: absolute;height: 100%;width: 100%;">
-    <el-container>
+  <div style="position:absolute;height: 100%;width:100%;min-width: 650px;">
       <NavBar style="position:absolute;top:0;left:0;width:100%;height: 50px;border-bottom:1px solid #BFBFBF;overflow: hidden;box-sizing: border-box" ref="NavBar"></NavBar>
       <div style="position:absolute;top:50px;bottom:0;left:0;right:0;overflow-x: hidden" ref="Content">
         <transition name="fade" mode="out-in">
@@ -9,14 +8,11 @@
           </keep-alive>
         </transition>
       </div>
-    </el-container>
   </div>
 </template>
 
 <script>
-  import { mapMutations } from 'vuex';
   import NavBar from 'src/views/layout/NavBar';
-  import mutation from 'src/store/mutation-types';
   import { mapGetters, mapActions } from 'vuex';
 
   export default {
@@ -50,19 +46,22 @@
         this.$refs.NavBar.setGithubUserInfo(this.getUser);
       },
       setHeightAndWidth() {
+        // console.log('不用nameSpace', this.$store.getters.getText);//module不配置nameSpace:true时可使用此属性，配置后不能再这样调用，属性变为user/getText
+        // console.log('使用nameSpace', this.$store.getters['user/getText']);
         this.setContentHeight(window.innerHeight - this.$refs.NavBar.$el.offsetHeight);
         this.setContentWidth(window.innerWidth);
       },
-      ...mapMutations({
-        setContentHeight: mutation.SET_CONTENT_HEIGHT,
-        setContentWidth: mutation.SET_CONTENT_WIDTH,
-      }),
+      ...mapActions({
+        setContentHeight: 'layout/setContentHeight',//区分module需要在module中配置nameSpace:true
+        setContentWidth: 'layout/setContentWidth'
+      })
     },
     computed: {
       ...mapGetters({
-        contentHeight: 'getContentHeight',
-        contentWidth: 'getContentWidth',
-        getUser: 'getUser'
+        getContentHeight: 'layout/getContentHeight',//区分module需要在module中配置nameSpace:true
+        getContentWidth: 'layout/setContentWidth',
+        getUser: 'user/getUser',
+        getText: 'user/getText'
       }),
     },
     watch: {

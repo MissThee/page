@@ -5,7 +5,8 @@
   "author": "forget",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve --port 8200",
+    "note": "--mode test 为使用.env.test配置文件，可用于设置process.env.NODE_ENV的值",
+    "serve": "vue-cli-service serve --port 8200 --mode test",
     "build": "vue-cli-service build",
     "inspect": "vue inspect"
   },

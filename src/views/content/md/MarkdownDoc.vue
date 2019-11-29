@@ -2,12 +2,12 @@
   <div style="margin:0 10%;">
     <div v-show="isShowTree">
       <div class="reduce-height-element">
-        <el-tag type="info" size="large" style="color:#555;font-weight: bolder">初始目录深度(0不限):
+        <el-tag type="info" size="large" style="color:#555;font-weight: bolder">目录深度(0不限):
           <el-input-number size="mini" :min="0" :max="99999" label="" v-model="treeDeep"></el-input-number>
           <el-button type="primary" size="small" style="margin-left:10px" plain @click="initTreeData">加载列表</el-button>
         </el-tag>
         <div style="float: right">
-          <el-tag type="info" size="large" @click="isShowTree=true" style="color:#555;font-weight: bolder">已设置目录:</el-tag>
+          <el-tag type="info" size="large" @click="isShowTree=true" style="color:#555;font-weight: bolder">根目录:</el-tag>
           <el-tag type="info" size="large" @click="isShowTree=true" style="color:#555;font-weight: bolder">{{currentSettingValue.repository}}</el-tag>
           <el-tag type="info" size="large" @click="isShowTree=true" style="color:#555;font-weight: bolder">{{currentSettingValue.docRoot}}</el-tag>
         </div>
@@ -367,9 +367,9 @@
     },
     computed: {
       ...mapGetters({
-        contentHeight: 'getContentHeight',
-        contentWidth: 'getContentWidth',
-        getUser: 'getUser'
+        contentHeight: 'layout/getContentHeight',
+        contentWidth: 'layout/getContentWidth',
+        getUser: 'user/getUser'
       }),
     },
     watch: {
