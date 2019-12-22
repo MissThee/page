@@ -8,8 +8,8 @@ module.exports = {
   pages: {//多入口
     docviewer: {
       entry: 'src/docviewer/main.js',
-      template: 'public/docviewer/index.html',
-      filename: 'docviewer/index.html',
+      template: 'public/index.html',
+      filename: 'index.html',
     },
   },
   outputDir: 'dist', // 打包文件输出路径，即打包到哪里
