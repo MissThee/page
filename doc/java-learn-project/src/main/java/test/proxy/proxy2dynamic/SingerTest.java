@@ -7,9 +7,10 @@ import java.lang.reflect.Proxy;
 //2.动态代理，JDK代理。目标对象必须实现一个或多个接口
 public class SingerTest {
     public static void main(String[] args) {
+
         ISinger TARGET = new Singer();
         ISinger PROXY = (ISinger) Proxy.newProxyInstance(
-                TARGET.getClass().getClassLoader(),     //ClassLoader loader        目标对象使用类加载器。也可用ISinger.class.getClassLoader()
+                TARGET.getClass().getClassLoader(),     //ClassLoader loader        目标对象使用类加载器。也可用ISinger.class.getClassLoader()、ClassLoader.getSystemClassLoader()等
                 TARGET.getClass().getInterfaces(),      //Class<?>[] interfaces     目标对象的接口的类型。也可用new Class[]{ISinger.class}
                 new InvocationHandler() {               //InvocationHandler h       事件处理接口，需传入一个实现类，一般直接使用匿名实现类
                     @Override

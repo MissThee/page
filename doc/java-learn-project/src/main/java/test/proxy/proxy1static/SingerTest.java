@@ -1,6 +1,6 @@
 package test.proxy.proxy1static;
 
-//静态代理。目标对象须实现一个或多个接口。
+//静态代理。目标对象须实现一个或多个接口。相当于直接写了个新的实现类
 public class SingerTest {
     public static void main(String[] args) {
         //原对象
