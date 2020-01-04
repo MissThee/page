@@ -1,5 +1,4 @@
 package test.jdbc;
-//STEP 1. Import required packages
 
 import java.sql.*;
 
