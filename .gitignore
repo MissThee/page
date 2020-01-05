@@ -18,3 +18,11 @@ selenium-debug.log
 doc/java-learn-project/target/
 
 *.iml
+
+doc/elasticsearch7/elasticsearch-java-project/target/
+
+doc/flux-mongodb-learn-project/.mvn/
+
+doc/flux-mongodb-learn-project/mvnw
+
+doc/flux-mongodb-learn-project/mvnw.cmd
