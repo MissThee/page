@@ -26,3 +26,5 @@ doc/flux-mongodb-learn-project/.mvn/
 doc/flux-mongodb-learn-project/mvnw
 
 doc/flux-mongodb-learn-project/mvnw.cmd
+
+doc/elasticsearch7/elasticsearch-spring-project/target/
