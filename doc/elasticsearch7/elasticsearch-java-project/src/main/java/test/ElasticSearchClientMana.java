@@ -183,6 +183,7 @@ public class ElasticSearchClientMana {
                             , RequestOptions.DEFAULT);
         }
         if (false) {
+            //创建mappings
             restHighLevelClient
                     .indices()
                     .putMapping(
