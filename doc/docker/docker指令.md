@@ -22,6 +22,15 @@ docker stop
 ```
 docker rm <id>
 ```  
+进入镜像
+```
+docker exec -it <镜像id> bash
+```
+宿主与镜像文件拷贝
+```
+docker cp <镜像id>:<镜像中绝对路径> <本机路径，相对路径则从cmd的当前目录开始>
+```
+
 
 ### 操作所有容器：
 容器停止  

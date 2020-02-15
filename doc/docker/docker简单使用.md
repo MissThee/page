@@ -27,7 +27,7 @@
 2. 当前目录创建mysql文件夹用以存储数据库文件，win版docker会弹窗提示输入windows用户密码，已授权使用共享磁盘空间
 3. 当前目录运行镜像  
     ```cmd
-    docker run -t -i -p 13306:3306 -v $PWD/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=password -d --name <自定义名称> <mysql镜像id>
+    docker run -t -i -p <外部端口(宿主机可访问)>:3306 -v $PWD/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=<密码> -d --name <自定义名称> <mysql镜像id> --character-set-server=utf8 --collation-server=utf8_unicode_ci
     ```
 
 
