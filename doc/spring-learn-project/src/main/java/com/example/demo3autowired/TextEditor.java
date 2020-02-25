@@ -1,20 +1,20 @@
 package com.example.demo3autowired;
 
 public class TextEditor {
-    private SpellChecker spellChecker1;
+    private SpellChecker spellChecker;
 
     private String note;
 
-    public SpellChecker getSpellChecker1() {
-        return spellChecker1;
+    public SpellChecker getSpellChecker() {
+        return spellChecker;
     }
 
-    public void setSpellChecker1(SpellChecker spellChecker1) {
-        this.spellChecker1 = spellChecker1;
+    public void setSpellChecker(SpellChecker spellChecker) {
+        this.spellChecker = spellChecker;
     }
 
     public void spellCheck() {
-        spellChecker1.check();
+        spellChecker.check();
     }
 
     public String getNote() {

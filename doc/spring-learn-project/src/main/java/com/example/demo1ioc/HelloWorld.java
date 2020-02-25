@@ -4,6 +4,7 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 public class HelloWorld implements InitializingBean, DisposableBean {
     HelloWorld() {
@@ -18,6 +19,11 @@ public class HelloWorld implements InitializingBean, DisposableBean {
     @PostConstruct
     private void postConstruct() {
         System.out.printf("%-35s - [%-20s] - %s\n", "postConstruct func()", "@PostConstruct注解", this.message);
+    }
+
+    @PreDestroy
+    private void preDestroy() {
+      System.out.printf("%-35s - [%-20s] - %s\n", "preDestroy func()", "@PreDestroy注解", this.message);
     }
 
     private void destroyMethod() {
