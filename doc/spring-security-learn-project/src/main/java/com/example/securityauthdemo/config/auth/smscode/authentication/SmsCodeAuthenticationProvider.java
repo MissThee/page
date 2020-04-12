@@ -10,30 +10,28 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 
 public class SmsCodeAuthenticationProvider implements AuthenticationProvider {
 
-    private SmsCodeUserDetailsService smsCodeUserDetailsService;
+  private SmsCodeUserDetailsService smsCodeUserDetailsService;
 
-    public void setSmsCodeUserDetailsService(SmsCodeUserDetailsService smsCodeUserDetailsService) {
-        this.smsCodeUserDetailsService = smsCodeUserDetailsService;
-    }
+  public void setSmsCodeUserDetailsService(SmsCodeUserDetailsService smsCodeUserDetailsService) {
+    this.smsCodeUserDetailsService = smsCodeUserDetailsService;
+  }
 
-    protected UserDetailsService getSmsCodeUserDetailsService() {
-        return smsCodeUserDetailsService;
+  @Override
+  public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+    //
+    SmsCodeAuthenticationToken smsCodeAuthenticationToken = (SmsCodeAuthenticationToken) authentication;
+    UserDetails userDetails = smsCodeUserDetailsService.loadUserByUsername((String) smsCodeAuthenticationToken.getPrincipal());
+    if (userDetails == null) {
+      throw new InternalAuthenticationServiceException("无法获取用户信息");
     }
+    SmsCodeAuthenticationToken smsCodeAuthenticationTokenResult = new SmsCodeAuthenticationToken(userDetails.getUsername(), userDetails.getAuthorities());
+    smsCodeAuthenticationTokenResult.setDetails(smsCodeAuthenticationToken.getDetails());
+    return smsCodeAuthenticationTokenResult;
+  }
 
-    @Override
-    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        SmsCodeAuthenticationToken smsCodeAuthenticationToken = (SmsCodeAuthenticationToken) authentication;
-        UserDetails userDetails = smsCodeUserDetailsService.loadUserByUsername((String) smsCodeAuthenticationToken.getPrincipal());
-        if (userDetails == null) {
-            throw new InternalAuthenticationServiceException("无法获取用户信息");
-        }
-        SmsCodeAuthenticationToken smsCodeAuthenticationTokenResult = new SmsCodeAuthenticationToken(userDetails.getUsername(), userDetails.getAuthorities());
-        smsCodeAuthenticationTokenResult.setDetails(smsCodeAuthenticationToken.getDetails());
-        return smsCodeAuthenticationTokenResult;
-    }
-
-    @Override
-    public boolean supports(Class<?> authentication) {
-        return SmsCodeAuthenticationToken.class.isAssignableFrom(authentication);
-    }
+  @Override
+  public boolean supports(Class<?> authentication) {
+    //支持验证何种类型的对象。此对象由AbstractAuthenticationProcessingFilter的attemptAuthentication()实现提供
+    return SmsCodeAuthenticationToken.class.isAssignableFrom(authentication);
+  }
 }
