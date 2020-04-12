@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "spring.security.loginType",
+      "type": "java.lang.String",
+      "description": "Description for spring.security.loginType."
+    }
+  ] }
