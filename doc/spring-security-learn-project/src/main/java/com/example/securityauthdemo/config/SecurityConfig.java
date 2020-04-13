@@ -2,6 +2,7 @@ package com.example.securityauthdemo.config;
 
 import com.example.securityauthdemo.config.auth.*;
 import com.example.securityauthdemo.config.auth.imagecode.KaptchaCodeValidateFilter;
+import com.example.securityauthdemo.config.auth.jwt.JwtTokenAuthenticationFilter;
 import com.example.securityauthdemo.config.auth.smscode.SmsCodeSecurityConfig;
 import com.example.securityauthdemo.utils.StaticKey;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
@@ -32,8 +34,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
   private final MyInvalidSessionStrategy myInvalidSessionStrategy;
   private final KaptchaCodeValidateFilter kaptchaCodeFilter;
   private final SmsCodeSecurityConfig smsCodeSecurityConfig;
+  private final JwtTokenAuthenticationFilter jwtTokenAuthenticationFilter;
 
-  public SecurityConfig(MyAuthenticationSuccessHandler myAuthenticationSuccessHandler, MyAuthenticationFailureHandler myAuthenticationFailureHandler, MyExpiredSessionStrategy myExpiredSessionStrategy, MyUserDetailsService myUserDetailsService, DataSource dataSource, MyLogoutSuccessHandler myLogoutSuccessHandler, MyInvalidSessionStrategy myInvalidSessionStrategy, KaptchaCodeValidateFilter kaptchaCodeFilter, SmsCodeSecurityConfig smsCodeSecurityConfig) {
+  public SecurityConfig(MyAuthenticationSuccessHandler myAuthenticationSuccessHandler, MyAuthenticationFailureHandler myAuthenticationFailureHandler, MyExpiredSessionStrategy myExpiredSessionStrategy, MyUserDetailsService myUserDetailsService, DataSource dataSource, MyLogoutSuccessHandler myLogoutSuccessHandler, MyInvalidSessionStrategy myInvalidSessionStrategy, KaptchaCodeValidateFilter kaptchaCodeFilter, SmsCodeSecurityConfig smsCodeSecurityConfig, JwtTokenAuthenticationFilter jwtTokenAuthenticationFilter) {
     this.myAuthenticationSuccessHandler = myAuthenticationSuccessHandler;
     this.myAuthenticationFailureHandler = myAuthenticationFailureHandler;
     this.myExpiredSessionStrategy = myExpiredSessionStrategy;
@@ -43,8 +46,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     this.myInvalidSessionStrategy = myInvalidSessionStrategy;
     this.kaptchaCodeFilter = kaptchaCodeFilter;
     this.smsCodeSecurityConfig = smsCodeSecurityConfig;
+    this.jwtTokenAuthenticationFilter = jwtTokenAuthenticationFilter;
   }
-
   @Override
   protected void configure(HttpSecurity httpSecurity) throws Exception {
 //        httpSecurity
@@ -56,6 +59,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     httpSecurity
       .apply(smsCodeSecurityConfig).and()
       .addFilterBefore(kaptchaCodeFilter, UsernamePasswordAuthenticationFilter.class)
+      .addFilterBefore(jwtTokenAuthenticationFilter,UsernamePasswordAuthenticationFilter.class)
       .headers().frameOptions().disable()//允许显示iframe，禁用x-frame-options头。（为h2管理页面临时设置）
 
       .and()
@@ -100,7 +104,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
       .and()
       .sessionManagement()
-
+//      .sessionCreationPolicy(SessionCreationPolicy.STATELESS)//如果仅使用jwt，可禁用session
 //                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)//session创建策略
 //                .invalidSessionUrl("/invalid.html")//session过期后跳转url
       .invalidSessionStrategy(myInvalidSessionStrategy)

@@ -1,7 +1,7 @@
 package com.example.securityauthdemo.config.auth.jwt;
 
-import com.example.securityauthdemo.model.SysUser;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.Data;
@@ -10,8 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+
 @ConfigurationProperties(prefix = "jwt")
 @Component
 @Data
@@ -21,56 +20,45 @@ public class JwtTokenUtil {
   private String header;
 
   public String generateToken(UserDetails userDetails) {
-    Map<String, Object> claims = new HashMap<>(2);
-    claims.put("sub", userDetails.getUsername());
-    claims.put("created", new Date());
-    return buildToken(claims);
+    return Jwts.builder()
+      .setSubject(userDetails.getUsername())
+      .setExpiration(new Date(System.currentTimeMillis() + expiration))
+      .setIssuedAt(new Date())
+      .signWith(SignatureAlgorithm.HS512, secret)
+      .compact();
   }
 
   public String getUsernameFromToken(String token) {
-    String username;
     try {
-      Claims claims = getClaimsFromToken(token);
-      username = claims.getSubject();
+      return getClaimsFromToken(token).getSubject();
     } catch (Exception e) {
-      username = null;
+      return null;
     }
-    return username;
   }
 
-  public Boolean isTokenExpired(String token) {
+  public Boolean isTokenValidated(String token) {
     try {
-      Claims claims = getClaimsFromToken(token);
-      Date expiration = claims.getExpiration();
-      return expiration.before(new Date());
+      return getClaimsFromToken(token).getExpiration().before(new Date());
     } catch (Exception e) {
       return false;
     }
   }
 
   public String refreshToken(String token) {
-    String refreshToken;
     try {
-      Claims claims = getClaimsFromToken(token);
-      claims.put("created", new Date());
-      refreshToken = buildToken(claims);
+      return Jwts.builder()
+        .setSubject(getClaimsFromToken(token).getSubject())
+        .setExpiration(new Date(System.currentTimeMillis() + expiration))
+        .setIssuedAt(new Date())
+        .signWith(SignatureAlgorithm.HS512, secret)
+        .compact();
     } catch (Exception e) {
-      refreshToken = null;
+      return null;
     }
-    return refreshToken;
   }
 
-  public Boolean validateToken(String token, UserDetails userDetails) {
-    String username = getUsernameFromToken(token);
-    return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
-  }
-
-  private String buildToken(Map<String, Object> claims) {
-    Date expirationDate = new Date(System.currentTimeMillis() + expiration);
-    return Jwts.builder().setClaims(claims)
-      .setExpiration(expirationDate)
-      .signWith(SignatureAlgorithm.HS512, secret)
-      .compact();
+  public Boolean validateToken(String token) {
+    return  !isTokenValidated(token);
   }
 
   private Claims getClaimsFromToken(String token) {

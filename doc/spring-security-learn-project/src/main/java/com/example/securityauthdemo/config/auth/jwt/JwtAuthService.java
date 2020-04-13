@@ -35,7 +35,7 @@ public class JwtAuthService {
   }
 
   public String refreshToken(String oldToken) {
-    if (!jwtTokenUtil.isTokenExpired(oldToken)) {
+    if (!jwtTokenUtil.isTokenValidated(oldToken)) {
       return jwtTokenUtil.refreshToken(oldToken);
     }
     return null;

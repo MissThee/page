@@ -4,6 +4,7 @@ import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.access.prepost.PreFilter;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,7 +31,7 @@ public class TestController {
     @PreFilter(filterTarget = "inputList", value = "filterObject%2==0")
     //filterTarget指定过滤对象，此处指定inputList
     //filterObject指过滤的每个对象，此处条件是inputList中每个对象除以2余0即可通过
-    public String test3(List<Integer> inputList) {
+    public String test3(@RequestBody  List<Integer> inputList) {
         return "test3";
     }
 
