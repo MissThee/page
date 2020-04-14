@@ -1,0 +1,61 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <!--<script src="axios.min.js"></script>-->
+</head>
+<body>
+<div>
+  <input id="url" >
+  <input type="button" onclick="downLoadHandler(document.getElementById('url').value)" value="下载">
+</div>
+</body>
+<!--<script src="axios.min.js"></script>-->
+<script>
+  function downLoadHandler(url) {//请求后台
+    var xhr = new XMLHttpRequest() || new ActiveXObject('Microsoft,XMLHTTP');
+    xhr.responseType = 'arraybuffer';//重要！不可修改
+    xhr.open('get', url);
+    //设置header，但只能同源服务使用
+    xhr.setRequestHeader("authorization","123");
+    // post传输json参数
+    // xhr.setRequestHeader('content-type', 'application/json');
+    // var data={"123":"456"}
+    // xhr.send(JSON.stringify(data));
+    //监听
+    xhr.onreadystatechange = function () {
+      //当请求成功的时候
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        var content = xhr.response;
+        var blob = new Blob([content]);
+        var fileName; // 文件名
+        if (xhr.getResponseHeader('content-disposition') !== null) {
+          fileName = decodeURI(xhr.getResponseHeader('content-disposition').split('filename=')[1]);
+        } else {
+          fileName = url.substring(url.lastIndexOf('/')+1);
+        }
+        if ('download' in document.createElement('a')) { // （非IE下载）
+          var elink = document.createElement('a');
+          elink.download = fileName;
+          elink.style.display = 'none';
+          elink.href = URL.createObjectURL(blob);
+          document.body.appendChild(elink);
+          elink.click();
+          URL.revokeObjectURL(elink.href); // （释放URL 对象）
+          document.body.removeChild(elink);
+        } else { // （IE10+下载）
+          navigator.msSaveBlob(blob, fileName);
+        }
+      } else if (xhr.status !== 200) {
+
+      }
+    };
+  }
+</script>
+
+<style>
+  .label {
+    width: 100px;
+    display: inline-block;
+  }
+</style>
+</html>
