@@ -1,0 +1,16 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://dubbo.apache.org/schema/dubbo" xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd http://dubbo.apache.org/schema/dubbo http://dubbo.apache.org/schema/dubbo/dubbo.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+    <context:component-scan base-package="com.missthee.businessconsumer.imp"/>
+    <bean id="springContextHolder" class="com.missthee.businessconsumer.ApplicationContextHelper" lazy-init="false"/>
+<!--   应用名，唯一-->
+    <dubbo:application name="business-consumer"/>
+<!--   zookeeper服务地址-->
+    <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
+    <!--使用Reference配置该service的实现方法通过远程调用-->
+    <!--stub属性可配置，执行此Service中的方法前先执行Stub中的方法-->
+    <dubbo:reference id="userService" interface="com.missthee.interf.UserService" timeout="1000" stub="com.missthee.businessconsumer.interf.UserServiceStub" >
+        <dubbo:method name="getUserInfo"/>
+    </dubbo:reference>
+</beans>

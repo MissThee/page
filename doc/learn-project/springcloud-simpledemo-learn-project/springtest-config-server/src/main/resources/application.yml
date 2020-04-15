@@ -1,0 +1,25 @@
+server:
+  port: 3344
+
+spring:
+  application:
+    name: springtest-config-server #若不配置，直接使用module名
+  profiles:
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: classpath:/config
+        git:
+          uri: https://github.com/MissThee/springcloud-config.git
+#          如果Git仓库为公开仓库，可以不填写用户名和密码，如果是私有仓库需要填写
+#          username: 1163182715@qq.com
+#          password: 123
+#          uri: git@github.com:MissThee/springcloud-config.git
+#          passphrase: ssh-rsa <自己的令牌> 1163182715@qq.com
+#配置中心为独立服务，其他工程直接使用配置中心的地址访问，获取配置
+
+
+
+

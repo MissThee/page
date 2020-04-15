@@ -1,0 +1,8 @@
+server:
+  port: 80
+#【ribbon1/3】使用负载均衡需先配置eureka
+eureka:
+  client:
+    register-with-eureka: false
+    service-url:
+      defaultZone: http://etest:123@eureka7001.com:7001/eureka/,http://etest:123@eureka7002.com:7002/eureka/,http://etest:123@eureka7003.com:7003/eureka/

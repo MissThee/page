@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: springtest-config-test # 此配置在此仅为输出查看用
+  profiles:
+    active: default
+server:
+  port: 3355
+eureka:
+  client:
+    service-url:
+      defaultZone: http://etest:123@eureka7001.com:7001/eureka/,http://etest:123@eureka7002.com:7002/eureka/,http://etest:123@eureka7003.com:7003/eureka/             #此地址为eureka服务中配置的地址

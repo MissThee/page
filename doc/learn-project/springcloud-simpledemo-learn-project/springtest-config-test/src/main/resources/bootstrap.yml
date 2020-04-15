@@ -1,0 +1,10 @@
+#application.yml 是用户级的资源配置
+#bootstrap.yml   是系统级的，优先级更高
+#此微服务从3344微服务获取配置文件，最终启动后使配置文件中配置。（如dev配置中port为9010，此服务运行后端口号为9010，非3355）
+spring:
+  cloud:
+    config:
+      name: port-config
+      profile: dev #开发环境，例如 {name}-{profile} = port-config-dev.yml。此profile与本项目启用的profile无关，仅作为文件名拼接
+#      label: master #如果从git中获取，可配置分支
+      uri: http://localhost:3344 # 指明配置服务中心的网址

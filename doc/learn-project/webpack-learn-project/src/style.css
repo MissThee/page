@@ -1,0 +1,18 @@
+. {
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    font-family: 'MyFont', serif;
+    height: 500px;
+    background: gray url('./img.png') no-repeat top left;
+}
+
+@font-face {
+    font-family: 'MyFont';
+    src: url('./kust.woff.ttf') format('ttf'),
+    url('./kust.woff.ttf') format('woff');
+    font-size: 30px;
+    font-style: normal;
+}

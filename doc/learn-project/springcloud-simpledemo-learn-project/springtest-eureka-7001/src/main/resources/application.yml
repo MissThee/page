@@ -1,0 +1,21 @@
+server:
+  port: 7001
+
+eureka:
+  instance:
+    hostname: eureka7001.com    #eureka服务端的实例host   自行修改C:\Windows\System32\drivers\etc\host文件做的映射127.0.0.1。注意此处不能匹配值为http://xxxxxxewalIntervalInSeconds
+    lease-renewal-interval-in-seconds: 30 #eureka中节点不能立即使用，需经过此时间后才能使用，此时间内各eureka节点中需要做同步等处理。生产环境不建议修改此值
+  client:
+    register-with-eureka: true     #false表示不在自己的注册中心注册自己。
+    fetch-registry: true     #false表示自己就是注册中心，我的职责就是维护服务实例，并不需要去检索服务
+    service-url:
+      defaultZone: http://etest:123@eureka7002.com:7002/eureka/,http://etest:123@eureka7003.com:7003/eureka/
+      #服务端解决eureka中节点非正常关闭，但不被剔除问题。生产环境不建议使用
+  server:
+    enable-self-preservation: false # 关闭eureka自我保护机制，不锁定服务列表，默认true。生产环境不建议使用此配置
+    eviction-interval-timer-in-ms: 5000 #修改eureka服务列表刷新时间，单位ms，修改此值也会关闭eureka自我保护机制，默认是60*1000。生产环境不建议配置
+spring:
+  security:
+    user:
+      name: etest
+      password: 123

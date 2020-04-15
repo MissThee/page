@@ -1,0 +1,39 @@
+{
+  "name": "webpack1",
+  "sideEffects": [
+    "*.css"
+  ],
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --config config/webpack.prod.js",
+    "watch-help": "echo 服务不停，修改文件，实时构建，手动刷新服务器",
+    "watch": "webpack --watch --config config/webpack.dev.js",
+    "start-help": "echo 安装npm install --save-dev webpack-dev-server \\ webpack.config.js 添加devServer: {contentBase: './dist'} ",
+    "start": "webpack-dev-server --open --config config/webpack.dev.js",
+    "server-help": "echo 安装npm install --save-dev express webpack-dev-middleware ",
+    "server": "node server.js",
+    "package": "webpack --config config/webpack.package.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "clean-webpack-plugin": "^3.0.0",
+    "css-loader": "^3.0.0",
+    "csv-loader": "^3.0.2",
+    "file-loader": "^4.0.0",
+    "html-loader": "^0.5.5",
+    "html-webpack-plugin": "^3.2.0",
+    "style-loader": "^0.23.1",
+    "uglifyjs-webpack-plugin": "^2.1.3",
+    "webpack": "^4.35.3",
+    "webpack-cli": "^3.3.5",
+    "webpack-manifest-plugin": "^2.0.4",
+    "webpack-merge": "^4.2.1",
+    "xml-loader": "^1.2.1"
+  },
+  "dependencies": {
+    "lodash": "^4.17.14"
+  }
+}
