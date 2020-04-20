@@ -3,6 +3,7 @@ import Global from 'src/docviewer/utils/global';
 
 const tokenKey = 'tokenKey';
 const repositoryKey = 'repositoryKey';
+const refNameKey = 'refNameKey';
 const docRootKey = 'docRootKey';
 const userKey = 'userKey';
 const isManualLoginKey = 'isManualLoginKey';
@@ -36,6 +37,20 @@ export default {
       return Cookies.remove(repositoryKey);
     }
   },
+
+  refName:{
+    getRefNameValue() {
+      let value = Cookies.get(refNameKey);
+      return !value || value === 'undefined' ? Global.DEFAULT_REF_NAME : value;
+    },
+    setRefNameValue(value) {
+      return Cookies.set(refNameKey, value, { expires: 10000 });
+    },
+    removeRefValue() {
+      return Cookies.remove(refNameKey);
+    }
+  },
+
   docRoot: {
     getDocRootValue() {
       let value = Cookies.get(docRootKey);

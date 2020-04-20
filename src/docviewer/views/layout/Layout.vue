@@ -1,5 +1,5 @@
 <template>
-  <div style="position:absolute;height: 100%;width:100%;min-width: 650px;">
+  <div style="position:absolute;height: 100%;width:100%;min-width: 500px;">
       <NavBar style="position:absolute;top:0;left:0;width:100%;height: 50px;border-bottom:1px solid #BFBFBF;overflow: hidden;box-sizing: border-box" ref="NavBar"></NavBar>
       <div style="position:absolute;top:50px;bottom:0;left:0;right:0;overflow-x: hidden" ref="Content">
         <transition name="fade" mode="out-in">

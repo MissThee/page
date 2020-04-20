@@ -7,6 +7,8 @@
           <el-button type="primary" size="small" style="margin-left:10px" plain @click="initTreeData">加载列表</el-button>
         </el-tag>
         <div style="float: right">
+          <el-tag type="info" size="large" @click="isShowTree=true" style="color:#555;font-weight: bolder">分支:</el-tag>
+          <el-tag type="info" size="large" @click="isShowTree=true" style="color:#555;font-weight: bolder">{{currentSettingValue.branch}}</el-tag>
           <el-tag type="info" size="large" @click="isShowTree=true" style="color:#555;font-weight: bolder">根目录:</el-tag>
           <el-tag type="info" size="large" @click="isShowTree=true" style="color:#555;font-weight: bolder">{{currentSettingValue.repository}}</el-tag>
           <el-tag type="info" size="large" @click="isShowTree=true" style="color:#555;font-weight: bolder">{{currentSettingValue.docRoot}}</el-tag>
@@ -106,6 +108,7 @@
       return {
         currentSettingValue: {
           repository: '',
+          branch: '',
           docRoot: '',
         },
         currentMdEditorFileValue: '',
@@ -144,9 +147,10 @@
         this.$router.push('/setting');
         return;
       }
-      if (this.currentSettingValue.repository !== Cookie.repository.getRepositoryValue() || this.currentSettingValue.docRoot !== Cookie.docRoot.getDocRootValue()) {
+      if (this.currentSettingValue.branch !== Cookie.refName.getRefNameValue() || this.currentSettingValue.repository !== Cookie.repository.getRepositoryValue() || this.currentSettingValue.docRoot !== Cookie.docRoot.getDocRootValue()) {
         this.currentSettingValue.repository = Cookie.repository.getRepositoryValue();
         this.currentSettingValue.docRoot = Cookie.docRoot.getDocRootValue();
+        this.currentSettingValue.branch = Cookie.refName.getRefNameValue();
         this.initTreeData();
       }
     },
@@ -154,7 +158,7 @@
       initTreeData() {
         this.treeData = [];
         this.defaultExpandedKeys = [];
-        this.requestTreeData('https://api.github.com/repos/' + this.getUser.login + '/' + Cookie.repository.getRepositoryValue() + '/contents' + Cookie.docRoot.getDocRootValue(), this.treeData, undefined, this.treeDeep);
+        this.requestTreeData('https://api.github.com/repos/' + this.getUser.login + '/' + Cookie.repository.getRepositoryValue() + '/contents' + Cookie.docRoot.getDocRootValue() + '?ref=' + Cookie.refName.getRefNameValue(), this.treeData, undefined, this.treeDeep);
       },
       requestTreeData(url, treeData, nodeDeep, limitDeep) {
         nodeDeep = nodeDeep || 0;

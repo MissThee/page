@@ -1,5 +1,6 @@
 export default {
   DEFAULT_REPOSITORY: 'page',
+  DEFAULT_REF_NAME:'doc',
   DEFAULT_DOC_ROOT: '/doc',
   APP:{
     client_id:'5b9229938ee038fe1f49',

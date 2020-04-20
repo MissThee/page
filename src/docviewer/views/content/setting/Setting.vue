@@ -39,6 +39,14 @@
     </el-form>
     <el-form inline style="width: 400px;text-align: left;margin:10px auto;padding:10px;border:1px solid #cccccc;border-radius: 5px">
       <el-form-item>
+        <el-button type="primary" size="mini" plain @click="setRefName">设置分支</el-button>
+      </el-form-item>
+      <el-form-item>
+        <el-input v-model="refName" :placeholder="refNamePlaceHolder"></el-input>
+      </el-form-item>
+    </el-form>
+    <el-form inline style="width: 400px;text-align: left;margin:10px auto;padding:10px;border:1px solid #cccccc;border-radius: 5px">
+      <el-form-item>
         <el-button type="primary" size="mini" plain @click="setDocRoot">设置根目录</el-button>
       </el-form-item>
       <el-form-item>
@@ -67,6 +75,8 @@
         repositoryPlaceHolder: Global.DEFAULT_REPOSITORY,
         docRoot: '',
         docRootPlaceHolder: Global.DEFAULT_DOC_ROOT,
+        refName:'',
+        refNamePlaceHolder:Global.DEFAULT_REF_NAME
       };
     },
     created() {
@@ -115,6 +125,14 @@
       setDocRoot() {
         let value = this.docRoot === '' ? this.docRootPlaceHolder : this.docRoot;
         Cookie.docRoot.setDocRootValue(value);
+        this.$notify({
+          type: 'success',
+          title: '设置成功',
+        });
+      },
+      setRefName() {
+        let value = this.refName === '' ? this.refNamePlaceHolder : this.refName;
+        Cookie.refName.setRefNameValue(value);
         this.$notify({
           type: 'success',
           title: '设置成功',
