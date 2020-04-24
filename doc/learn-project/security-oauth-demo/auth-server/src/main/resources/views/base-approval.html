@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Authentication</title>
+</head>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #24292e;
+        background-color: #fff;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    .login-container {
+        overflow: hidden;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        height: 100%;
+        background-color: #f9f9f9;
+        width: 100%;
+        padding-top: 80px
+    }
+
+    .form-container {
+        padding: 20px;
+        margin: 0 auto;
+        background-color: #FFF;
+        border-radius: 5px;
+        border: 1px solid #CCC;
+        width: 300px;
+    }
+
+    .title-container {
+        text-align: center;
+    }
+
+    .content-container {
+    }
+
+    .separate-line {
+        border-bottom: 1px solid #eaecef;
+        margin: 5px 0;
+    }
+
+    .btn {
+        width: 100%;
+        height: 35px;
+        line-height: 35px;
+        cursor: pointer;
+        margin-top: 5px;
+        margin-bottom: 15px;
+        border-radius: 3px;
+        border: none;
+        font-size: 15px;
+        color: #fff;
+        background-color: #28a745;
+        background-image: linear-gradient(-180deg, #34d058, #28a745 90%);
+    }
+
+    .title {
+        font-size: 14px;
+    }
+
+    .error-info-container {
+        padding: 0 20px;
+        margin: 0 auto 10px;
+        color: #86181d;
+        background-color: #ffdce0;
+        border-radius: 5px;
+        border: 1px solid #FFCCCC;
+        width: 300px;
+        height: 50px;
+        line-height: 50px;
+        text-align: left;
+        font-size: 13px;
+    }
+
+    .scope-content {
+        padding: 20px;
+    }
+
+    .scope-item {
+        overflow: hidden;
+        margin: 4px 0 0 0
+    }
+
+    .scope-label {
+        float: left;
+    }
+
+    .scope-check-box {
+        float: right;
+    }
+</style>
+<body>
+<!--thymeleaf登录页[4]-->
+<div class="login-container">
+    <div class="error-info-container" th:if="${param.error}">
+        <span>Incorrect username or password.</span>
+    </div>
+    <div class="form-container">
+        <div class="title-container">
+            <p class="title">
+                Permission for <strong><span th:text="${clientId}"></span></strong>
+            </p>
+        </div>
+        <div class="separate-line"></div>
+        <div class="content-container">
+            <form method="post" action="/oauth/authorize">
+                <input type="hidden" name="user_oauth_approval" value="true">
+                <input type="hidden" name="_csrf" th:value="${_csrf.getToken()}"/>
+                <div class="scope-content">
+                    <div class="scope-item" th:each="item:${scopes}">
+                        <div class="scope-label">
+                            <label th:for="'scope.'+${item}"><span th:text="${item}"></span></label>
+                        </div>
+                        <div class="scope-check-box">
+                            <input th:id="'scope.'+${item}" type="checkbox" th:name="'scope.'+${item}" value="true" checked="checked"/>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn" type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+
+
+</div>
+</body>
+</html>

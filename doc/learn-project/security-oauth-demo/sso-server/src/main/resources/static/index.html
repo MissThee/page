@@ -1,0 +1,126 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="webjars/jquery/3.5.0/jquery.min.js" type="text/javascript"></script>
+    <style type="text/css">
+    </style>
+</head>
+<body>
+<div>
+    <a id="loginButton" href='/login'>login</a>
+    <div id="logoutButtonEL" style="display: none">
+        <input type="button" id="logoutButton" onclick="logout()" value="logout"/>
+        <a id="logoutAuthButton" href="http://localhost:8080/logout?redirect_uri=http://localhost:9999">logoutAuth</a>
+    </div>
+    <form>
+        <fieldset>
+            <legend>userInfo</legend>
+            <pre style="word-break: break-all" id="userInfo"></pre>
+        </fieldset>
+        <fieldset>
+            <legend>log</legend>
+            <div id="log"></div>
+        </fieldset>
+    </form>
+</div>
+<script>
+    window.onload = () => {
+        $.ajax(
+            "/dashboard/user",
+            {
+                success: function (data, textStatus) {
+                    console.log(123, data)
+                    $("#log").text("login-success");
+                    $("#userInfo").text(formatUserInfo(data));
+                    $("#logoutButtonEL").show();
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    $("#userInfo").text(textStatus);
+                }
+            })
+    };
+
+    function logout() {
+        $.ajax(
+            "/logout",
+            {
+                type: "POST",
+                data: JSON.stringify({}),
+                contentType: 'application/json;charset=utf-8',
+                headers: {
+                    "X-XSRF-TOKEN": getCookie("XSRF-TOKEN")
+                },
+                success: function (data, textStatus) {
+                    $("#log").text("logout-success");
+                    $("#userInfo").text("");
+                    $("#logoutButtonEL").hide();
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    $("#log").text(textStatus);
+                }
+            })
+    }
+
+    function getCookie(name) {
+        let arr, reg = new RegExp("(^| )" + name + "=([^;]*)(;|$)");
+        if (arr = document.cookie.match(reg))
+            return unescape(arr[2]);
+        else
+            return null;
+    }
+
+    function formatUserInfo(data, level) {
+        level = level === undefined ? 0 : level;
+        level += 2;
+        let result = '';
+        if (typeof (data) === 'string') {
+            for (let i = 2; i <= level; i++) {
+                result += '  ';
+            }
+            result += '"';
+            result += data.toString();
+            result += '"';
+            result += ',\n';
+        } else {
+            result += '{\n';
+            for (let key in data) {
+                for (let i = 2; i <= level; i++) {
+                    result += '  ';
+                }
+                result += key;
+                result += ':';
+                if (data[key] !== null) {
+                    if (Array.isArray(data[key])) {
+                        result += '[\n';
+                        for (let item in data[key]) {
+                            if (data[key][item] !== null) {
+                                result += formatUserInfo(data[key][item], level);
+                            }
+                        }
+                        for (let i = 2; i <= level; i++) {
+                            result += '  ';
+                        }
+                        result += '],\n';
+                    } else if (typeof (data[key]) === 'object') {
+                        // result += '\n';
+                        result += formatUserInfo(data[key], level);
+                    } else {
+                        result += '"';
+                        result += data[key].toString();
+                        result += '"';
+                        result += ',\n';
+                    }
+                } else {
+                    result += 'null\n';
+                }
+            }
+            for (let i = 4; i <= level; i++) {
+                result += '  ';
+            }
+            result += '}\n';
+        }
+        return result;
+    }
+</script>
+</body>
+</html>

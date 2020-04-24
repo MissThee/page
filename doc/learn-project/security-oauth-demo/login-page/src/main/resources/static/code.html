@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>code</title>
+</head>
+<body>
+
+<h1>Code 页面</h1>
+<pre id="textSpace"></pre>
+<div id="tip"></div>
+<script>
+    const textSpaceEl = document.getElementById("textSpace");
+    const tipEl = document.getElementById("tip");
+    window.onload = () => {
+        var code = getUrlParam("code");
+        var state = getUrlParam("state");
+        console.log("result!!", code, state);
+        getAccessToken(code, redirectAfterLogin, state);
+    };
+
+    // JS`正则表达式`获取地址栏url参数：
+    function getUrlParam(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); // 构造一个含有目标参数的正则表达式对象
+        var r = window.location.search.substr(1).match(reg); // 匹配目标参数
+        if (r != null) return unescape(r[2]);
+        return null; // 返回参数值
+    }
+
+    function getAccessToken(code, fn, state) {
+        var url = "http://localhost:9000/code?code=" + code;
+        // XMLHttpRequest对象用于在后台与服务器交换数据
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200 || xhr.status === 304) {
+                // 从服务器获得数据
+                fn.call(this, xhr.responseText, state);
+            }
+        };
+        xhr.send();
+    }
+
+    function redirectAfterLogin(responseText, state) {
+        var responseObj = JSON.parse(responseText);
+        textSpaceEl.innerText =
+            'access_token: ' + responseObj['access_token'] + '\n' +
+            'refresh_token: ' + responseObj['refresh_token'] + '\n' +
+            'username: ' + responseObj['username'] + '\n';
+        console.log('responseObj!!',responseObj)
+        document.cookie = 'access_token=' + responseObj['access_token'];
+        document.cookie = 'refresh_token=' + responseObj['refresh_token'];
+        document.cookie = 'username=' + responseObj['username'];
+        redirectAfterTime(5, state)
+    }
+
+    function redirectAfterTime(leftTime, url) {
+        if (leftTime === undefined || leftTime === null) {
+            leftTime = 3;
+        }
+        tipEl.innerText = leftTime + '秒后跳转到登录前页面[' + url + ']。。。';
+        setTimeout(() => {
+            if (leftTime > 1) {
+                leftTime -= 1;
+                redirectAfterTime(leftTime, url)
+            } else {
+                window.location.replace(url)
+            }
+        }, 1000)
+    }
+</script>
+</body>
+</html>
