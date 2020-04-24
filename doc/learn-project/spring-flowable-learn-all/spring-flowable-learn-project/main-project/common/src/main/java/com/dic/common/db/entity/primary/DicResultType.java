@@ -1,0 +1,54 @@
+package com.dic.common.db.entity.primary;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableField;
+import java.io.Serializable;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+
+/**
+ * <p>
+ * 信访信访室处理结果
+ * </p>
+ *
+ * @author DESKTOP-3Q631SR,WLW
+ * @since 2019-06-28
+ */
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Accessors(chain = true)
+@ApiModel(value="DicResultType对象", description="信访信访室处理结果")
+public class DicResultType implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @TableId(value = "id", type = IdType.AUTO)
+    private Integer id;
+
+    @TableField("name")
+    private String name;
+
+    @TableField("index_number")
+    private Integer indexNumber;
+
+    @TableField("is_delete")
+    private Boolean isDelete;
+
+    @TableField("is_in_let_clue")
+    private Boolean isInLetClue;
+
+    public static final String ID = "id";
+
+    public static final String NAME = "name";
+
+    public static final String INDEX_NUMBER = "index_number";
+
+    public static final String IS_DELETE = "is_delete";
+
+    public static final String IS_IN_LET_CLUE = "is_in_let_clue";
+
+}
