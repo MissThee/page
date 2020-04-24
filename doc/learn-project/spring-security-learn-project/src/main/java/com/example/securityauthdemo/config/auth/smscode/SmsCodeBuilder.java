@@ -12,20 +12,23 @@ import java.util.Random;
 @Component
 public class SmsCodeBuilder {
     public String buildAndSaveToSession(String mobile) {
+        if(mobile==null||"".equals(mobile.trim())){
+            throw new NullPointerException("手机号不能为空");
+        }
         ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (requestAttributes == null) {
             throw new NullPointerException("请求异常，无法获取请求信息");
         }
         HttpSession httpSession = requestAttributes.getRequest().getSession();
-        String code = buildCode(4);
+        String code = buildCode(6);
         httpSession.setAttribute(StaticKey.SMS_CODE_SESSION_KEY,code);
         httpSession.setAttribute(StaticKey.SMS_CODE_DATE_SESSION_KEY,LocalDateTime.now().plusMinutes(5));
-        httpSession.setAttribute(StaticKey.SMS_MOBILE_SESSION_KEY, mobile);
+        httpSession.setAttribute(StaticKey.SMS_MOBILE_SESSION_KEY, mobile.trim());
         return code;
     }
 
     private static String buildCode(Integer length) {
-        String base = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        String base = "0123456789";
         Random random = new Random();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < length; i++) {

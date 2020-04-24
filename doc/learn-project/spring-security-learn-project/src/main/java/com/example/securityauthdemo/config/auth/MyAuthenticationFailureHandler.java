@@ -21,16 +21,14 @@ public class MyAuthenticationFailureHandler extends SimpleUrlAuthenticationFailu
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-        String errorMsg="";
-        if(exception instanceof SessionAuthenticationException){
-            errorMsg=exception.getMessage();
-        }
-        if(loginType.equals("json")) {
+        String errorMsg = exception.getMessage();
+
+        if (loginType.equals("json")) {
             response.setContentType("application/json;charset=UTF-8");
             response.setStatus(200);
-            response.getWriter().write(objectMapper.writeValueAsString("登录失败。"+errorMsg));
-        }else {
-            response.sendRedirect("/login.html?result=failure&msg="+errorMsg);
+            response.getWriter().write(objectMapper.writeValueAsString("登录失败。" + errorMsg));
+        } else {
+            response.sendRedirect("/login.html?result=failure&msg=" + errorMsg);
 //            super.onAuthenticationFailure(request, response, exception);
         }
     }

@@ -105,7 +105,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
       .and()
       .sessionManagement()
 //      .sessionCreationPolicy(SessionCreationPolicy.STATELESS)//如果仅使用jwt，可禁用session
-//                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)//session创建策略
 //                .invalidSessionUrl("/invalid.html")//session过期后跳转url
       .invalidSessionStrategy(myInvalidSessionStrategy)
       .sessionFixation()
@@ -153,7 +152,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
   @Override
   public void configure(WebSecurity webSecurity) {
-    webSecurity.ignoring().antMatchers("/css/**", "/js/**");
+    webSecurity.ignoring().antMatchers(
+            "/css/**", "/js/**"
+//            ,"/jwtLogin","/kaptcha","/smsCode"//验证码等登录api无需验证
+    );
   }
 
   @Bean(name = BeanIds.AUTHENTICATION_MANAGER)

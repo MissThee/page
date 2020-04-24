@@ -12,9 +12,9 @@ public class SmsCodeUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         //数据库查询
-        if ("18733011741".equals(username)) {
+        if ("13333333333".equals(username)) {
             MyUserDetails myUserDetails = new MyUserDetails();
-            myUserDetails.setUsername("18733011741");
+            myUserDetails.setUsername("13333333333");
             String permissionStr = "";
             permissionStr = "ROLE_user,page3";
             myUserDetails.setCollection(AuthorityUtils.commaSeparatedStringToAuthorityList(permissionStr));

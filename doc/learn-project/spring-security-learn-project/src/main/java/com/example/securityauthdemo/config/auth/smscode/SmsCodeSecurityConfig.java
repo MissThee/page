@@ -4,7 +4,6 @@ import com.example.securityauthdemo.config.auth.MyAuthenticationFailureHandler;
 import com.example.securityauthdemo.config.auth.MyAuthenticationSuccessHandler;
 import com.example.securityauthdemo.config.auth.smscode.authentication.SmsCodeAuthenticationFilter;
 import com.example.securityauthdemo.config.auth.smscode.authentication.SmsCodeAuthenticationProvider;
-import com.example.securityauthdemo.config.auth.smscode.filter.SmsCodeValidateFilter;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,10 +16,8 @@ public class SmsCodeSecurityConfig extends SecurityConfigurerAdapter<DefaultSecu
     private final MyAuthenticationFailureHandler myAuthenticationFailureHandler;
     private final MyAuthenticationSuccessHandler myAuthenticationSuccessHandler;
     private final SmsCodeUserDetailsService smsCodeUserDetailsService;
-    private final SmsCodeValidateFilter smsCodeValidateFilter;
 
-    public SmsCodeSecurityConfig(SmsCodeValidateFilter smsCodeValidateFilter, MyAuthenticationFailureHandler myAuthenticationFailureHandler, MyAuthenticationSuccessHandler myAuthenticationSuccessHandler, SmsCodeUserDetailsService smsCodeUserDetailsService) {
-        this.smsCodeValidateFilter = smsCodeValidateFilter;
+    public SmsCodeSecurityConfig(MyAuthenticationFailureHandler myAuthenticationFailureHandler, MyAuthenticationSuccessHandler myAuthenticationSuccessHandler, SmsCodeUserDetailsService smsCodeUserDetailsService) {
         this.myAuthenticationFailureHandler = myAuthenticationFailureHandler;
         this.myAuthenticationSuccessHandler = myAuthenticationSuccessHandler;
         this.smsCodeUserDetailsService = smsCodeUserDetailsService;
@@ -37,8 +34,7 @@ public class SmsCodeSecurityConfig extends SecurityConfigurerAdapter<DefaultSecu
             setSmsCodeUserDetailsService(smsCodeUserDetailsService);
         }};
         httpSecurity
-                .addFilterBefore(smsCodeValidateFilter, UsernamePasswordAuthenticationFilter.class)
-                .authenticationProvider(smsCodeAuthenticationProvider)
-                .addFilterAfter(smsCodeAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterAt(smsCodeAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .authenticationProvider(smsCodeAuthenticationProvider);
     }
 }
