@@ -1,0 +1,17 @@
+{
+  "name": "tstest",
+  "version": "1.0.0",
+  "description": "",
+  "main": "test.js",
+  "dependencies": {
+    "reflect-metadata": "^0.1.13"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "help": "echo \"执行tsc编译当前目录ts为js。node [文件名]执行测试\" && exit 1",
+    "compile": "tsc",
+    "run": "node test.js"
+  },
+  "author": "MissThee <1163182715@qq.com>",
+  "license": "MIT"
+}
