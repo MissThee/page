@@ -10,7 +10,10 @@
   "scripts": {
     "help": "echo \"执行tsc编译当前目录ts为js。node [文件名]执行测试\" && exit 1",
     "compile": "tsc",
-    "run": "node test.js"
+    "run": "node test.js",
+    "compile&run":"tsc && node test.js",
+    "about concurrently": "echo \"需要用到 concurrently 这个 npm 包，执行为并发执行\" && exit 1",
+    "compile&run1": "concurrently \"tsc\" \"node test.js\" "
   },
   "author": "MissThee <1163182715@qq.com>",
   "license": "MIT"
