@@ -19,30 +19,33 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 //重载构造函数
-function classDecorator(constructor) {
-    return /** @class */ (function (_super) {
-        __extends(class_1, _super);
-        function class_1() {
-            var _this = _super !== null && _super.apply(this, arguments) || this;
-            _this.newProperty = "new property";
-            _this.hello = "override";
-            return _this;
-        }
-        return class_1;
-    }(constructor));
-}
-var Greeter = /** @class */ (function () {
-    function Greeter(m) {
-        this.property = "property";
-        this.hello = m;
+var constructorOverride;
+(function (constructorOverride) {
+    function classDecorator(constructor) {
+        return /** @class */ (function (_super) {
+            __extends(class_1, _super);
+            function class_1() {
+                var _this = _super !== null && _super.apply(this, arguments) || this;
+                _this.newProperty = "new property";
+                _this.hello = "override";
+                return _this;
+            }
+            return class_1;
+        }(constructor));
     }
-    Greeter = __decorate([
-        classDecorator
-    ], Greeter);
-    return Greeter;
-}());
-console.log(new Greeter("world"));
-//class_1 {
-//   property: 'property',
-//   hello: 'override',
-//   newProperty: 'new property' }
+    var Greeter = /** @class */ (function () {
+        function Greeter(m) {
+            this.property = "property";
+            this.hello = m;
+        }
+        Greeter = __decorate([
+            classDecorator
+        ], Greeter);
+        return Greeter;
+    }());
+    console.log(new Greeter("world"));
+    //class_1 {
+    //   property: 'property',
+    //   hello: 'override',
+    //   newProperty: 'new property' }
+})(constructorOverride || (constructorOverride = {}));
