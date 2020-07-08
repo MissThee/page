@@ -1,0 +1,10 @@
+spring-context      spring容器扩展功能
+┣━spring-expression   el表达式支持
+┣━spring-aop          切面编程功能
+┃ ┗━spring-beans
+┗━spring-beans        bean/di功能
+
+
+
+spring-core         核心
+┗━spring-jcl          通用日志
