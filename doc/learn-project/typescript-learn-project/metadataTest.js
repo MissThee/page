@@ -1,47 +1,28 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+require("reflect-metadata"); //引入依赖，使编译后的js文件可使用 Reflect.defineMetadata() 等方法
 var metadataTest;
 (function (metadataTest) {
-    function df(constructor) {
-        Object.seal(constructor);
-        Object.seal(constructor.prototype);
-    }
-    //装饰器工厂。
+    var target = { a: 1 };
+    //给指定对象设置元数据 metadataValue
+    Reflect.defineMetadata('metaKey1', "哈哈哈", target);
+    Reflect.defineMetadata('metaKey2', "嘿嘿嘿", target, "laugh");
+    //从指定对象获取元数据
+    console.log(Reflect.getMetadata('metaKey1', target));
+    console.log(Reflect.getMetadata('metaKey2', target, 'laugh'));
     function d1(metadataValue) {
         return function (target) {
             Reflect.defineMetadata('metaKey1', metadataValue, target);
         };
-    }
-    //重载构造函数
-    function d11(constructor) {
-        return /** @class */ (function (_super) {
-            __extends(class_1, _super);
-            function class_1() {
-                var _this = _super !== null && _super.apply(this, arguments) || this;
-                _this.newProperty = "new property";
-                _this.hello = "override";
-                return _this;
-            }
-            return class_1;
-        }(constructor));
     }
     function d2(metadataValue) {
         return function (target, propertyKey, descriptor) {
@@ -58,19 +39,46 @@ var metadataTest;
             return this.param1;
         };
         __decorate([
-            d2("zxc")
+            d2("zxc"),
+            __metadata("design:type", Function),
+            __metadata("design:paramtypes", []),
+            __metadata("design:returntype", void 0)
         ], Post.prototype, "param1Value", null);
         Post = __decorate([
-            df,
-            d11,
-            d1('admin')
+            d1('admin'),
+            __metadata("design:paramtypes", [])
         ], Post);
         return Post;
     }());
-    //获取静态类的meta值，参数(metaKey,被标注的类)
+    //获取meta值，参数(metaKey, target)
     var metadata = Reflect.getMetadata('metaKey1', Post);
-    //获取静态类的meta值，参数(metaKey,被标注的方法的类的实例，被标注的方法名)
+    //获取meta值，参数(metaKey, target, propertyKey)
     var metadata1 = Reflect.getMetadata('metaKey2', new Post(), 'param1Value');
     console.log(metadata);
     console.log(metadata1);
+    // 几个默认的元数据键
+    // 类型元数据使用元数据键"design:type"
+    // 参数类型元数据使用元数据键"design:paramtypes"
+    // 返回值类型元数据使用元数据键"design:returntype"
+    function logType(target, key) {
+        var t = Reflect.getMetadata("design:type", target, key);
+        console.log(key, t, t.name);
+    }
+    var Demo = /** @class */ (function () {
+        function Demo() {
+            this.attr1 = "zxc1";
+            this.attr2 = "asd2";
+        }
+        __decorate([
+            logType,
+            __metadata("design:type", String)
+        ], Demo.prototype, "attr1", void 0);
+        __decorate([
+            logType,
+            Reflect.metadata("design:type", Number) //自行注入类型信息，此时logType中使用getMetadata方法获取类型，为此处注入的类型，而不是属性本身的类型
+            ,
+            __metadata("design:type", String)
+        ], Demo.prototype, "attr2", void 0);
+        return Demo;
+    }());
 })(metadataTest || (metadataTest = {}));

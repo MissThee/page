@@ -280,4 +280,13 @@ var p09AdvancedTypes;
     console.log(proxytp.name.get());
     console.log(proxytp.name.set("zxc"));
     console.log(proxytp);
+    function unproxify(t) {
+        var result = {};
+        for (var k in t) {
+            result[k] = t[k].get();
+        }
+        return result;
+    }
+    var originalProps = unproxify(proxytp);
+    console.log(originalProps.name);
 })(p09AdvancedTypes || (p09AdvancedTypes = {}));
