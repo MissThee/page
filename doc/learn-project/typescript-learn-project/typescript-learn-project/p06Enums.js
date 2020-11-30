@@ -61,9 +61,9 @@ var p06Enums;
             Enum[Enum["A"] = 0] = "A";
             Enum["B"] = "b";
         })(Enum_1 || (Enum_1 = {}));
-        var a = Enum_1.A;
+        var a_1 = Enum_1.A;
         var b = Enum_1.B;
-        var nameOfA = Enum_1[a]; // "A"
+        var nameOfA = Enum_1[a_1]; // "A"
         // let nameOfB = Enum[b];//错误，只有值为数字类型的枚举成员有反向映射
     }
     {

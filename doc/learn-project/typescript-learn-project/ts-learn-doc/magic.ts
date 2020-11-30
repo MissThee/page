@@ -7,45 +7,51 @@ namespace magic {
         sideLength: number;
     }
 
-    let square = <Square>{};//<Square>强制类型转换
+    let square = <Square>{};//断言，确定变量类型为指定类型
     square.color = "blue";
     square.sideLength = 10;
 
 // ------------------------------------------------
     interface ClockConstructor {
-        new(hour: number, minute: number): any;//class的构造函数声明
+        new(hour: number, minute: number): ClockInterface;//class的构造函数声明
     }
-
-    class Clock {
+    interface ClockInterface {
+        tick();
+    }
+    class Clock implements ClockInterface{ //此处不能直接继承ClockConstructor。因为Clock的构造函数在class的静态部分，继承ClockConstructor检查不到对象中有此属性，报错
         hour: number;
         minutes: number;
-
+        tick() {
+            console.log("tick tock");
+        }
         constructor(h: number, m: number) {
             this.hour = h;
             this.minutes = m;
         }
     }
-
-    let clock: ClockConstructor = Clock;
-    let clockObj = new clock(1, 2);
+    function createClock(ctor: ClockConstructor, hour: number, minute: number): ClockInterface {
+        return new ctor(hour, minute);
+    }
+    let clockObj = createClock(Clock,1, 2);
 
 // ------------------------------------------------
     interface StringArray {
-        [x: number]: string;//数组类型的索引类型:值类型。其中变量名x可为任意名称
+        [x: number]: string;//[数组类型的索引类型:值类型]。其中变量名x可为任意名称
     }
 
 // ------------------------------------------------
-    interface User {
-        name: string;
-        age: number;
+    class User {
+        name: string='';
+        age: number=0;
     }
+    function test(user :User):User{ return new User()}
 
-    type ParamType<T> = T extends (param: infer P) => any ? P : T;
-    type Param = ParamType<Func>;   // Param = User
-    type AA = ParamType<string>;    // string
-    type ReturnType<T> = T extends (...args: any[]) => infer P ? P : any;
-    type Func = () => User;
-    type Test = ReturnType<Func>;   // Test = User
+    type ParamType<T> = T extends (param: infer P) => any ? P : T;//获取类型的参数类型
+    type t1 = ParamType<typeof test>;   // Param = User
+    type t2 = ParamType<string>;        // string
+
+    type ReturnType<T> = T extends (...args: any[]) => infer P ? P : any;//获取类型的返回类型
+    type r1 = ReturnType<typeof test>;   // Test = User
     /*
     ParamType：
         T extends (param: infer P) => any ? P : T;

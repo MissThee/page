@@ -1,5 +1,4 @@
 //重载构造函数
-namespace constructorOverride {
     function classDecorator<T extends { new(...args: any[]): {} }>(constructor: T) {
         return class extends constructor {
             newProperty = "new property";
@@ -22,4 +21,5 @@ namespace constructorOverride {
 //   property: 'property',
 //   hello: 'override',
 //   newProperty: 'new property' }
-}
+
+export {}

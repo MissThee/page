@@ -22,10 +22,15 @@ var magic;
             this.hour = h;
             this.minutes = m;
         }
+        Clock.prototype.tick = function () {
+            console.log("tick tock");
+        };
         return Clock;
     }());
-    var clock = Clock;
-    var clockObj = new clock(1, 2);
+    function createClock(ctor, hour, minute) {
+        return new ctor(hour, minute);
+    }
+    var clockObj = createClock(Clock, 1, 2);
     /*
     ParamType：
         T extends (param: infer P) => any ? P : T;

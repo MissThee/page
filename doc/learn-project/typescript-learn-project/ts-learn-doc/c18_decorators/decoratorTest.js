@@ -5,9 +5,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
@@ -115,35 +112,24 @@ var decoratorTest;
         };
         demo1._param0 = 1;
         __decorate([
-            logProperty('1、实例成员 属性'),
-            __metadata("design:type", Number)
+            logProperty('1、实例成员 属性')
         ], demo1.prototype, "_param1", void 0);
         __decorate([
-            logAccessor('2、实例成员 访问符'),
-            __metadata("design:type", Number),
-            __metadata("design:paramtypes", [])
+            logAccessor('2、实例成员 访问符')
         ], demo1.prototype, "param1", null);
         __decorate([
             logMethod("3、实例成员 方法"),
-            __param(0, logParam("4、实例成员 方法参数")),
-            __metadata("design:type", Function),
-            __metadata("design:paramtypes", [String]),
-            __metadata("design:returntype", void 0)
+            __param(0, logParam("4、实例成员 方法参数"))
         ], demo1.prototype, "hello", null);
         __decorate([
-            logProperty('5、静态成员 属性'),
-            __metadata("design:type", Number)
+            logProperty('5、静态成员 属性')
         ], demo1, "_param0", void 0);
         __decorate([
-            logMethod("5.1、静态成员 方法"),
-            __metadata("design:type", Function),
-            __metadata("design:paramtypes", [String]),
-            __metadata("design:returntype", void 0)
+            logMethod("5.1、静态成员 方法")
         ], demo1, "bye", null);
         demo1 = __decorate([
             logClass('6、类'),
-            __param(0, logParam("7、构造函数 参数")),
-            __metadata("design:paramtypes", [Number])
+            __param(0, logParam("7、构造函数 参数"))
         ], demo1);
         return demo1;
     }());
