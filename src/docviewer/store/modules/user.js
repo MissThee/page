@@ -3,7 +3,7 @@ import Cookie from 'src/docviewer/utils/cookies';
 export default {
   namespaced: true,//不加namespaced: true,会使getters在this.$store中暴露的名称改变为 nameSpace/property
   state: {
-    user: JSON.parse(Cookie.user.getUserValue() ? Cookie.user.getUserValue() : '{}') || {}
+    user: JSON.parse(Cookie.user.getUserValue() ? Cookie.user.getUserValue() : '{}') || {login:''}
   },
   mutations: {
     setUser(state, value) {

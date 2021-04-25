@@ -93,7 +93,7 @@
 </template>
 <script>
   import MarkDownArea from 'src/docviewer/views/common/MarkDownArea';
-  import MdApi from 'src/docviewer/api/md-api';
+  import MdApi from 'src/docviewer/api/info-api';
   import SimpleAutoHeightTable from 'src/docviewer/mixin/SimpleAutoHeightTable';
   import Cookie from 'src/docviewer/utils/cookies';
   import { mapGetters, mapActions } from 'vuex';

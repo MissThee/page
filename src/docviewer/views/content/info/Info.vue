@@ -15,7 +15,6 @@
 </template>
 <script>
   import MarkDownArea from 'src/docviewer/views/common/MarkDownArea';
-  import HomeApi from 'src/docviewer/api/home-api';
   import Global from 'src/docviewer/utils/global';
 
   export default {
