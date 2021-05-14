@@ -186,7 +186,7 @@
             value: true
           });
           exports.default = _sub.default;
-          module.exports = _sub['default'];
+          module.exports = _sub['default']; // 注意这里，当仅有一个export default时，会增加这个语句，将default属性赋值给整个导出对象
           
           // babel6 转义
           "use strict";
