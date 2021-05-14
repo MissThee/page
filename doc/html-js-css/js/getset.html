@@ -48,6 +48,15 @@
     var obj3 = {
         _name: "原始值3"
     };
+    // Object.defineProperty(obj3, 'name', {
+    //     get: function () {
+    //         return this._name;
+    //     },
+    //     set: function (value) {
+    //         console.log('obj3 的 set 调用');
+    //         this._name = value;
+    //     }
+    // })
     Object.defineProperties(obj3, {
         name: {
             get: function () {
@@ -69,7 +78,7 @@
 
     //为数据属性，属性描述:    configurable，enumerable，writable，value。（就是普通用的对象内的变量）
     //为访问器属性，属性描述:  configurable，enumerable，get，set。（就是用了get\set的方法,如果set和set都没定义那这个属性就是数据属性）
-
+    // ( get/set 与 writable/value不能同时使用 )
 
     //Object.defineProperties(对象,{ 属性名:function(){ 属性描述 }})         定义多个属性(数据属性或者访问器属性),通过这个方式新增的属性 属性特性都为false
     //Object.defineProperty(对象,属性名,{属性描述})                          定义多个属性(数据属性或者访问器属性),通过这个方式新增的属性 属性特性都为false
