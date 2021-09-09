@@ -10,6 +10,17 @@
 </div>
 </body>
 <!--<script src="axios.min.js"></script>-->
+<!--
+
+前端点击<a>标签下载文件时，pdf/txt/图片等会直接打开，可在后台返回头中增加头标识，控制下载
+注意：直接在浏览器访问下载文件的链接，某些浏览器会弹出下载，但是点击<a>标签是预览，测试需要使用<a>标签，且需注意缓存问题，建议增加时间戳
+
+Content-Disposition: inline       // 网页的一部分
+Content-Disposition: attachment   // 附件
+Content-Disposition: attachment; filename="filename.jpg"
+
+--> 
+  
 <script>
   function downLoadHandler(url) {//请求后台
     var xhr = new XMLHttpRequest() || new ActiveXObject('Microsoft,XMLHTTP');
