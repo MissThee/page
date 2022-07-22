@@ -1,0 +1,8 @@
+使用https://github.com/danielgtaylor/qtfaststart修改mp4信息头文件位置
+
+快速使用 
+easy_install qtfaststart
+python C:\Python27\Scripts\qtfaststart ./nlp.mp4 ./out.mp4
+
+修改后可使用mp4info.exe查看头文件位置
+moov是头文件位置

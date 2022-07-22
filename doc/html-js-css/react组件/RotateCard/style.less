@@ -1,0 +1,35 @@
+.rotate-card {
+  display: inline-block;
+  &__body {
+    position: relative;
+  }
+
+  &__front {
+    width: 100%;
+    transform: rotateY(0deg);
+    opacity: 1;
+    transition: transform 0.8s ease,opacity 0.8s cubic-bezier(.51,-0.35,0,2.4);
+    pointer-events: auto;
+    &--hover{
+      transform: rotateY(-180deg);
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  &__back {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    transform: rotateY(-180deg);
+    opacity: 0;
+    transition: transform 0.8s ease,opacity 0.8s cubic-bezier(.51,-0.35,0,2.4);
+    pointer-events: none;
+    &--hover {
+      transform: rotateY(0deg);
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+}
+
