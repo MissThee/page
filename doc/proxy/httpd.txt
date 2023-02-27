@@ -1,0 +1,19 @@
+配置文件结尾追加配置
+当前监听端口可追加功能
+/etc/httpd/conf/httpd.conf
+------------------------START------------------------
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_connect_module modules/mod_proxy_connect.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+LoadModule proxy_ftp_module modules/mod_proxy_ftp.so
+LoadModule access_compat_module modules/mod_access_compat.so
+ 
+ProxyRequests   On
+ProxyVia   On
+<Proxy *>
+    Order allow,deny
+    Allow from all
+# Deny from 127.0.0.1
+# Deny from 10.10.10.0/24
+</Proxy>
+------------------------END------------------------
