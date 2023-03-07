@@ -1,0 +1,7 @@
+<router-view v-slot="{ Component,route }">
+  <transition name="fade-slide" appear>
+    <keep-alive :include="keepAliveArray">
+      <component :key="route.name" :is="Component"/>
+    </keep-alive>
+  </transition>
+</router-view>
