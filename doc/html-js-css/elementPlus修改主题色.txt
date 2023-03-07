@@ -1,0 +1,17 @@
+element-plus 2.x
+
+
+使用sass修改自带主题色参数。（如果项目使用sass可直接修改组件中的主题色参数，无需单独编译整个主题css文件）
+
+
+@forward 'element-plus/theme-chalk/src/common/var.scss' with (
+  $colors: (
+    'primary': (
+      'base': #2E4B9C,
+    ),
+    'error': (
+      'base': #D24F4F
+    )
+  ),
+);
+@import "element-plus/theme-chalk/src/index.scss";
