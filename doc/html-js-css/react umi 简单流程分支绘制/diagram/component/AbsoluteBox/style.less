@@ -1,0 +1,31 @@
+.absoluteBox {
+  position: absolute;
+  z-index: 100;
+  //width: 60px;
+  min-width: 60px;
+  min-height: 22px;
+  overflow: hidden;
+  font-size: 12px;
+  font-family: MicrosoftYaHei, sans-serif;
+  white-space: nowrap;
+  text-align: center;
+  border-radius: 5px;
+  transform: translate(-50%, -50%);
+  user-select: none;
+  //cursor: pointer;
+  .title {
+    text-overflow: ellipsis;
+  }
+  .name {
+    color: #414957;
+    font-weight: bold;
+    background-color: white;
+  }
+
+  //&:hover {
+  //  z-index: 101;
+  //  width: auto;
+  //  min-width: 60px;
+  //  box-shadow: 0 0 5px #aaa;
+  //}
+}
