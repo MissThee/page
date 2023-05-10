@@ -76,12 +76,13 @@ const animateNumber = () => {
   clearTimer()
   requestAnimFrame(() => {
     if (performance.now() < startTimeStamp + props.duration) {
-      currentNumber.value = oldNumber + (finalNumber - oldNumber) * (performance.now() - startTimeStamp) / props.duration
-      currentNumber.value = Number(currentNumber.value.toFixed(fixNumber))
+      const numTmp = oldNumber + (finalNumber - oldNumber) * (performance.now() - startTimeStamp) / props.duration
+      currentNumber.value = Number(numTmp.toFixed(fixNumber))
       animateNumber()
     } else {
-      currentNumber.value = Number(finalNumber.toFixed(fixNumber))
-      oldNumber = currentNumber.value
+      const numTmp = Number(finalNumber.toFixed(fixNumber))
+      currentNumber.value = numTmp
+      oldNumber = numTmp
     }
   })
 }
