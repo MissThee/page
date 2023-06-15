@@ -10,8 +10,9 @@
     </div>
     <div class="bottom">
       <el-table row-key="id" v-loading="props.isLoading" :data="props.data" border>
-        <el-table-column label="呼叫ID" header-align="center" align="center" label-class-name="table-label" prop="callId" width="200"/>
-        <el-table-column label='会话内容示例' header-align="center" label-class-name="table-label" prop="content">
+        <el-table-column v-if="props.label[0]==='序号'" :label="props.label[0]" header-align="center" align="center" label-class-name="table-label" type="index" width="200" :index="(i)=>(props.param.page-1)*props.param.size+i+1"/>
+        <el-table-column v-else :label="props.label[0]" header-align="center" align="center" label-class-name="table-label" prop="id" width="200"/>
+        <el-table-column :label="props.label[1]" header-align="center" label-class-name="table-label" prop="content">
           <template #default="{row,$index}">
             <div style="position:relative">
               <el-scrollbar :ref="setScrollbarRef">
@@ -52,7 +53,7 @@ import {computed, nextTick, ref, watch} from "vue";
 const scrollbarRef = ref([])
 
 export type SourceTextTableData = {
-  callId: string,
+  id: string,
   content: string,
   keyword: string[]
 }
@@ -66,12 +67,14 @@ const props = withDefaults(defineProps<{
   isLoading?: boolean
   data: SourceTextTableData[]
   total?: number
+  label?: string[]
 }>(), {
   param: () => ({
     type: 'p',
     page: 1,
     size: 10,
-  })
+  }),
+  label: () => []
 })
 const isOpenRow = ref<Record<string, boolean>>({})
 const btnData = [

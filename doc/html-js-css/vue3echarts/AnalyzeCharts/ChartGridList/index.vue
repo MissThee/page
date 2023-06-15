@@ -61,6 +61,7 @@ export type ChartGridListData = {
 const props = withDefaults(defineProps<{
   type?: 'interest' | 'painSpot'
   data?: ChartGridListData[],
+
 }>(), {
   data: () => [],
 })

@@ -8,7 +8,7 @@
     >
       <div class="header">
         <div>
-          <div class="charts-title">{{ column.title }}</div>
+          <div class="charts-title">{{ props.titleFormatter?.(column.title, column, columnIndex, dataForShow) || column.title }}</div>
           <img class="charts-icon"
                :class="{
                   'charts-icon--disabled':!column.activeId,
@@ -88,6 +88,8 @@ const props = withDefaults(defineProps<{
   noTrend?: boolean | BoolReturnFunc
   noAutoActiveFirstRow?: boolean
   scrollHeight?: number | { min: number, max: number }
+  pathTitleSplit?: string
+  titleFormatter?: (title: string, column: DataForShow, columnIndex: number, dataForShow: DataForShow[]) => string
 }>(), {
   data: () => [],
   activeIds: () => [],
@@ -127,6 +129,10 @@ const buildDataForShow = (cascadeData: ChartCascadeProgressData[], level = 0) =>
     dataTmp.title = props.title || '';
   } else {
     dataTmp.title = dataForShow.value[level - 1]?.listData.find?.(e => dataForShow.value[level - 1]?.activeId === e.id)?.name || '';
+    if (props.pathTitleSplit !== undefined) {
+      const preTitle = (dataForShow.value[level - 1]?.title || '')
+      dataTmp.title = preTitle + (preTitle ? props.pathTitleSplit : '') + dataTmp.title
+    }
   }
   const activeRow = cascadeData?.find?.(e => e.id === props.activeIds[level]) // || cascadeData[0] //注释部分为 自动高亮子级本列第一个
   dataTmp.activeId = activeRow?.id

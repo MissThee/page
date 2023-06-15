@@ -41,7 +41,9 @@ const emits = defineEmits(['download'])
 const chartEl = ref()
 let chartInstance = null
 let chartOption: Record<string, any> = {
-  grid: {},
+  grid: {
+    left:30
+  },
   tooltip: {
     show: true,
   },
@@ -71,13 +73,13 @@ let chartOption: Record<string, any> = {
     type: 'value',
     minInterval:1,
     axisLine: {
-      show: true,
+      show: false,
       lineStyle: {
         color: "#cccccc"
       },
     },
     splitLine: {
-      show: true,
+      show: false,
       lineStyle: {
         type: 'dotted',
         width: 1,
@@ -86,7 +88,7 @@ let chartOption: Record<string, any> = {
     },
     axisLabel: {
       // formatter: '{value}',
-      show: true,
+      show: false,
       color: '#6f6f6f'
     }
   },

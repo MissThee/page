@@ -94,7 +94,7 @@ let chartOption: Record<string, any> = {
   xAxis: {
     boundaryGap: true,
     splitArea: { // 列分隔交替色
-      show: true,
+      show: false,
       interval: 0,
     },
     type: 'category',
@@ -126,7 +126,7 @@ let chartOption: Record<string, any> = {
       },
     },
     splitLine: {
-      show: true,
+      show: false,
       lineStyle: {
         type: 'dotted',
         width: 1,
