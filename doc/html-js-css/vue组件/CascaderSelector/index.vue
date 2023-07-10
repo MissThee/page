@@ -1,11 +1,13 @@
 <template>
   <el-select ref="selectRef"
+             :persistent="false"
              v-model="activeId"
              :teleported="true"
              popper-class="cascader-selector cascader-selector--custom-width"
              :clearable="props.clearable"
              collapse-tags
              collapse-tags-tooltip
+             :placeholder="props.placeholder"
              @clear="treeClearHandler"
              :multiple="props.multiple"
   >
@@ -30,7 +32,7 @@
             <el-icon v-if="row.children?.length">
               <ArrowRight/>
             </el-icon>
-            <el-icon class="row__tick">
+            <el-icon class="row__tick" v-if="dataForColumns?.length>1">
               <Check/>
             </el-icon>
           </div>
@@ -47,8 +49,10 @@
         </el-pagination>
       </div>
     </div>
-    <!--  将其余的选型隐藏掉  -->
-    <el-option v-for="item in dataPlain" :key="item.id" :value="item.id" :label="item.name" v-show="false"/>
+    <!--  站位，el-selet组件无任何el-option时，下拉不显示内容，用此站位  -->
+    <el-option value="" label="" v-if="dataForColumns?.[0]?.length" v-show="false"/>
+    <!--  将选中的选项加入到原列表，并隐藏下拉选项，让原选择组件可现实选中项目名称。(最优解是完全不渲染这些节点，但现在没找到方法，只能将选中的一部分渲染)  -->
+    <el-option v-for="item in dataPlain.filter(e=>Array.isArray(activeId) ? activeId.includes(e.id) : activeId === e.id)" :key="item.id" :value="item.id" :label="item.name" :visible="false" v-show="false"/>
   </el-select>
 </template>
 <script lang="ts">
@@ -77,7 +81,6 @@ const props = withDefaults(defineProps<{
 })
 const emits = defineEmits(['update:modelValue', 'change', 'clear'])
 const selectRef = ref()
-
 const dataForColumns = ref<CascaderSelectorData[][]>([])
 const activeId = ref<number | number[] | undefined>(props.multiple ? [] : undefined)
 
@@ -92,12 +95,13 @@ const dataPlain = ref<CascaderSelectorData[]>([]) // 给下拉列表，生成选
 const highlightIds = ref<{ parent: number[], active: number[], child: number[] }>({parent: [], active: [], child: []})
 
 let dataDeal = []
-
 const treeDataDeal = (data: CascaderSelectorData[], level = 0, pid?: number) => {
   data.forEach(e => {
     e._level = level
     e._pid = pid
+    // if (Array.isArray(activeId.value) ? activeId.value.includes(e.id) : activeId.value === e.id) {
     dataPlain.value.push(e) // 平铺数据
+    // }
     if (e.children?.length) {
       treeDataDeal(e.children, level + 1, e.id)
     }
@@ -180,19 +184,25 @@ const treeChangeHandler = (row?: CascaderSelectorData, rowIndex?: number, column
     }
     if (props.forceSelectSameLevel) { // 保持多选的内容在同一层级
       if (currentActiveLevel !== columnIndex) {
-        activeId.value = []
+        activeId.value.length = 0
         currentActiveLevel = columnIndex
       }
     } else {
       currentActiveLevel = undefined
     }
     if (row) {
+      // 增加或删除以选项
       const existIndex = activeId.value.indexOf(row?.id)
       if (existIndex === -1) {
         if (props.multipleLimit !== undefined) {
           const limitNum = getMultipleLimit(column, columnIndex)
-          if (limitNum === 0 || limitNum > activeId.value.length) {
+          if (limitNum === 1) { // 如果此列最多选1个，则直接切换到点击值
+            activeId.value.length = 0
             activeId.value.push(row?.id)
+          } else if (limitNum === 0 || limitNum > activeId.value.length) {// 如果此列最多选大于1个，数量到达后，禁止再增加选中值
+            activeId.value.push(row?.id)
+          } else {
+            ElMessage.warning(`此层级最多可选择${limitNum}个`)
           }
         } else {
           activeId.value.push(row?.id)
@@ -207,7 +217,7 @@ const treeChangeHandler = (row?: CascaderSelectorData, rowIndex?: number, column
   }
 
   emits('update:modelValue', activeId.value)
-  // change事件返回参数
+  // change事件返回参数：
   // activeId.value 当前所有激活的id
   // getActiveRow() 当前所有激活的id对应row数据
   // row 本次点击行数据
@@ -266,14 +276,15 @@ const getMultipleLimit = (column?: CascaderSelectorData[], columnIndex?: number)
   .select-wrapper {
     cursor: auto;
     padding: 0 !important;
-    height: 274px;
+    max-height: 274px;
+
+    position: relative;
     overflow: hidden;
     white-space: nowrap;
     display: flex; // 行充满 1/3
 
     .column {
       position: relative;
-      height: 100%;
       display: inline-flex;
       flex-direction: column;
       border-left: 1px solid #eee;
@@ -304,6 +315,7 @@ const getMultipleLimit = (column?: CascaderSelectorData[], columnIndex?: number)
           overflow: hidden;
           text-overflow: ellipsis;
           min-width: 0;
+          user-select: none;
         }
 
         &__tick {
