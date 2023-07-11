@@ -1,6 +1,5 @@
 <template>
   <el-select ref="selectRef"
-             :persistent="false"
              v-model="activeId"
              :teleported="true"
              popper-class="cascader-selector cascader-selector--custom-width"
