@@ -5,6 +5,16 @@
              popper-class="cascader-selector cascader-selector--custom-width"
              :clearable="props.clearable"
              collapse-tags
+             :popper-options="{
+                modifiers: [
+                  {
+                    name: 'flip',
+                    options: {
+                      fallbackPlacements: ['bottom', 'left'],
+                    },
+                  },
+                ],
+             }"
              collapse-tags-tooltip
              :placeholder="props.placeholder"
              @clear="treeClearHandler"
@@ -58,14 +68,16 @@
   </el-select>
 </template>
 <script lang="ts">
+
 export default {
   name: 'CascaderSelector'
 }
 </script>
 <script setup lang="ts">
-import {computed, ref, watch} from "vue";
+import {ref, watch} from "vue";
 import {Check, ArrowRight} from '@element-plus/icons-vue'
 import {findRelationNodeId} from "@/components/CascaderSelector/utils.ts";
+// "element-plus": "^2.3.4",
 
 const props = withDefaults(defineProps<{
   data: CascaderSelectorData[]
@@ -77,11 +89,13 @@ const props = withDefaults(defineProps<{
   multipleLimit?: number | number[] | ((column: CascaderSelectorData[], columnIndex: number) => number) // multiple 为true时，限制某层级可选中的个数；若forceSelectSameLevel也为true，则限定
   pager?: boolean | boolean[] | ((column: CascaderSelectorData[], columnIndex: number) => boolean)
   filterable?: boolean
+  columnSort?: (column: CascaderSelectorData[], columnIndex: number) => CascaderSelectorData[]
 }>(), {
   data: () => [],
   // multiple: true,
   // multipleLimit: 2
   // filterable: true
+  columnSort: (c: CascaderSelectorData[], _: number) => c
 })
 const emits = defineEmits(['update:modelValue', 'change', 'clear'])
 const selectRef = ref()
@@ -100,15 +114,23 @@ const highlightIds = ref<{ parent: number[], active: number[], child: number[] }
 
 let initialedData: CascaderSelectorData[] = []
 const initTreeData = (data: CascaderSelectorData[], level = 0, pid?: number) => {
+  data = props.columnSort(data, level)
   data.forEach(e => {
     e._level = level
     e._pid = pid
     dataPlain.value.push(e) // 平铺数据
+    if (currentActiveLevel === undefined && Array.isArray(activeId.value) && activeId.value.includes(e.id)) {
+      currentActiveLevel = level
+    }
     if (e.children?.length) {
       initTreeData(e.children, level + 1, e.id)
     }
   })
 }
+
+watch(() => props.modelValue, () => { // 绑定值改变时触发
+  activeId.value = props.modelValue
+}, {immediate: true, deep: true})
 
 watch(() => props.data, () => { // 数据改变时触发
   initialedData = JSON.parse(JSON.stringify(props.data)) as CascaderSelectorData[]
@@ -120,11 +142,9 @@ watch(() => props.data, () => { // 数据改变时触发
   highlightIds.value = findRelationNodeId(dataForColumns.value[0], (Array.isArray(activeId.value) ? activeId.value : [activeId.value]).filter(e => e) as number[])
 }, {immediate: true, deep: true})
 
-watch(() => props.modelValue, () => { // 绑定值改变时触发
-  activeId.value = props.modelValue
+watch(() => activeId.value, () => {
   highlightIds.value = findRelationNodeId(dataForColumns.value[0], (Array.isArray(activeId.value) ? activeId.value : [activeId.value]).filter(e => e) as number[])
 }, {immediate: true, deep: true})
-
 
 const getActiveRow = (): CascaderSelectorData | CascaderSelectorData[] | undefined => {
   let result
@@ -168,7 +188,6 @@ const hoverHandler = (row?: CascaderSelectorData, columnIndex?: number, immediat
         selectRef.value?.tooltipRef?.updatePopper?.()
       }
     }
-
   }
 
   if (immediate) {
@@ -195,14 +214,20 @@ const treeChangeHandler = (row?: CascaderSelectorData, rowIndex?: number, column
     }
     if (props.forceSelectSameLevel) { // 保持多选的内容在同一层级
       if (currentActiveLevel !== columnIndex) {
-        activeId.value.length = 0
-        currentActiveLevel = columnIndex
+        if (activeId.value.length) {
+          ElMessage.warning('不可跨级多选')
+          return
+        } else {
+          currentActiveLevel = columnIndex
+        }
+        // activeId.value.length = 0
+        // currentActiveLevel = columnIndex
       }
     } else {
       currentActiveLevel = undefined
     }
     if (row) {
-      // 增加或删除以选项
+      // 增加或删除选项
       const existIndex = activeId.value.indexOf(row?.id)
       if (existIndex === -1) {
         if (props.multipleLimit !== undefined) {
@@ -226,7 +251,6 @@ const treeChangeHandler = (row?: CascaderSelectorData, rowIndex?: number, column
     currentActiveLevel = columnIndex
     activeId.value = row?.id
   }
-
   emits('update:modelValue', activeId.value)
   // change事件返回参数：
   // activeId.value 当前所有激活的id
@@ -293,7 +317,7 @@ const filterMethod = (val: string) => {
   }
   filterTimer = setTimeout(() => {
     filterStr.value = val
-  }, 400)
+  }, 300)
   return true
 }
 
@@ -451,7 +475,7 @@ watch(() => filterStr.value, (val) => {
     .el-tag.is-closable {
       padding: 0 2px;
       min-width: calc(2em + 14px);
-      flex: 1;
+      flex-shrink: 1;
       display: inline-flex;
       white-space: nowrap;
 
@@ -469,6 +493,7 @@ watch(() => filterStr.value, (val) => {
   .el-select__input {
     flex: 1;
     min-width: 0;
+    margin-left: 5px;
   }
 }
 
