@@ -9,6 +9,8 @@
              collapse-tags-tooltip
              :placeholder="props.placeholder"
              @clear="treeClearHandler"
+             :filterable='props.filterable'
+             :filterMethod="filterMethod"
              :multiple="props.multiple"
   >
     <div class="select-wrapper">
@@ -37,7 +39,7 @@
             </el-icon>
           </div>
         </el-scrollbar>
-        <el-pagination v-if="getIsShowPagerInColumn(column,columnIndex) && cascadePageInfo[columnIndex].total"
+        <el-pagination v-if="getIsShowPagerInColumn(column,columnIndex) && cascadePageInfo[columnIndex].total && cascadePageInfo[columnIndex].total>cascadePageInfo[columnIndex].size"
                        class="pager"
                        layout="prev,slot,next"
                        v-model:current-page="cascadePageInfo[columnIndex].page"
@@ -48,11 +50,12 @@
           <div>{{ cascadePageInfo[columnIndex].page }}/{{ Math.ceil(cascadePageInfo[columnIndex].total / cascadePageInfo[columnIndex].size) }}</div>
         </el-pagination>
       </div>
+      <div v-if="filterStr&&!dataForColumns?.[0]?.length" class="tip-text">无匹配数据</div>
     </div>
     <!--  站位，el-selet组件无任何el-option时，下拉不显示内容，用此站位  -->
-    <el-option value="" label="" v-if="dataForColumns?.[0]?.length" v-show="false"/>
+    <el-option value="" label="" v-if="filterStr || dataForColumns?.[0]?.length" style="display: none !important;" v-show="false"/>
     <!--  将选中的选项加入到原列表，并隐藏下拉选项，让原选择组件可现实选中项目名称。(最优解是完全不渲染这些节点，但现在没找到方法，只能将选中的一部分渲染)  -->
-    <el-option v-for="item in dataPlain.filter(e=>Array.isArray(activeId) ? activeId.includes(e.id) : activeId === e.id)" :key="item.id" :value="item.id" :label="item.name" :visible="false" v-show="false"/>
+    <el-option v-for="item in dataPlain.filter(e=>Array.isArray(activeId) ? activeId.includes(e.id) : activeId === e.id)" :key="item.id" :value="item.id" :label="item.name" style="display: none !important;" v-show="false"/>
   </el-select>
 </template>
 <script lang="ts">
@@ -61,7 +64,7 @@ export default {
 }
 </script>
 <script setup lang="ts">
-import {ref, watch} from "vue";
+import {computed, ref, watch} from "vue";
 import {Check, ArrowRight} from '@element-plus/icons-vue'
 import {findRelationNodeId} from "@/components/CascaderSelector/utils.ts";
 
@@ -74,10 +77,12 @@ const props = withDefaults(defineProps<{
   forceSelectSameLevel?: boolean // true点击选中时，选中内容仅保留同级选中项
   multipleLimit?: number | number[] | ((column: CascaderSelectorData[], columnIndex: number) => number) // multiple 为true时，限制某层级可选中的个数；若forceSelectSameLevel也为true，则限定
   pager?: boolean | boolean[] | ((column: CascaderSelectorData[], columnIndex: number) => boolean)
+  filterable?: boolean
 }>(), {
   data: () => [],
   // multiple: true,
   // multipleLimit: 2
+  // filterable: true
 })
 const emits = defineEmits(['update:modelValue', 'change', 'clear'])
 const selectRef = ref()
@@ -87,39 +92,38 @@ const activeId = ref<number | number[] | undefined>(props.multiple ? [] : undefi
 let currentActiveLevel: number | undefined = undefined
 const expandIds = ref<number[]>([]) // 记录每列展开的id
 
-const pageDefaultParam = {page: 1, size: 20} // 分页参数
+const defaultPageSize = 20 // 分页参数
 const cascadePageInfo = ref<{ parentId?: number, page: number, size: number, total: number }[]>([]) // 依据parentId, 记录其子级分页状况
 
 const dataPlain = ref<CascaderSelectorData[]>([]) // 给下拉列表，生成选项
 
 const highlightIds = ref<{ parent: number[], active: number[], child: number[] }>({parent: [], active: [], child: []})
 
-let dataDeal = []
-const treeDataDeal = (data: CascaderSelectorData[], level = 0, pid?: number) => {
+let initialedData: CascaderSelectorData[] = []
+const initTreeData = (data: CascaderSelectorData[], level = 0, pid?: number) => {
   data.forEach(e => {
     e._level = level
     e._pid = pid
-    // if (Array.isArray(activeId.value) ? activeId.value.includes(e.id) : activeId.value === e.id) {
     dataPlain.value.push(e) // 平铺数据
-    // }
     if (e.children?.length) {
-      treeDataDeal(e.children, level + 1, e.id)
+      initTreeData(e.children, level + 1, e.id)
     }
   })
 }
 
-watch(() => props.modelValue, () => { // 绑定值改变时触发
-  activeId.value = props.modelValue
-  highlightIds.value = findRelationNodeId(props.data, (Array.isArray(activeId.value) ? activeId.value : [activeId.value]).filter(e => e) as number[])
+watch(() => props.data, () => { // 数据改变时触发
+  initialedData = JSON.parse(JSON.stringify(props.data)) as CascaderSelectorData[]
+  dataPlain.value = []
+  initTreeData(initialedData)
+
+  dataForColumns.value = [initialedData].filter(e => e?.length)
+  cascadePageInfo.value = [{page: 1, size: defaultPageSize, total: dataForColumns.value[0]?.length || 0}]
+  highlightIds.value = findRelationNodeId(dataForColumns.value[0], (Array.isArray(activeId.value) ? activeId.value : [activeId.value]).filter(e => e) as number[])
 }, {immediate: true, deep: true})
 
-watch(() => props.data, () => { // 数据改变时触发
-  dataDeal = JSON.parse(JSON.stringify(props.data)) as CascaderSelectorData[]
-  dataPlain.value = []
-  treeDataDeal(dataDeal)
-  dataForColumns.value = [dataDeal]
-  cascadePageInfo.value = [{...pageDefaultParam, total: dataDeal?.length || 0}]
-  highlightIds.value = findRelationNodeId(props.data, (Array.isArray(activeId.value) ? activeId.value : [activeId.value]).filter(e => e) as number[])
+watch(() => props.modelValue, () => { // 绑定值改变时触发
+  activeId.value = props.modelValue
+  highlightIds.value = findRelationNodeId(dataForColumns.value[0], (Array.isArray(activeId.value) ? activeId.value : [activeId.value]).filter(e => e) as number[])
 }, {immediate: true, deep: true})
 
 
@@ -143,13 +147,9 @@ const getActiveRow = (): CascaderSelectorData | CascaderSelectorData[] | undefin
 let hoverTimer: NodeJS.Timer | null = null
 
 // 行hover事件，触发展开下级内容
-const hoverHandler = (row?: CascaderSelectorData, columnIndex?: number) => {
-  if (hoverTimer) {
-    clearTimeout(hoverTimer)
-    hoverTimer = null
-  }
-  if (row && columnIndex !== undefined) {
-    hoverTimer = setTimeout(() => {
+const hoverHandler = (row?: CascaderSelectorData, columnIndex?: number, immediate = false) => {
+  const trigger = () => {
+    if (row && columnIndex !== undefined) {
       if (row.children?.length) {
         // 展开行标记
         expandIds.value[columnIndex] = row.id
@@ -159,15 +159,27 @@ const hoverHandler = (row?: CascaderSelectorData, columnIndex?: number) => {
         dataForColumns.value.length = columnIndex + 2
         // 展开列分页信息
         cascadePageInfo.value[columnIndex + 1] = {
-          ...pageDefaultParam,
+          page: 1,
+          size: defaultPageSize,
           total: row.children.length,
           parentId: row.id
         }
         cascadePageInfo.value.length = columnIndex + 2
         // 更新下拉框位置
-        selectRef.value.tooltipRef.updatePopper()
+        selectRef.value?.tooltipRef?.updatePopper?.()
       }
-    }, 50)
+    }
+
+  }
+
+  if (immediate) {
+    trigger()
+  } else {
+    if (hoverTimer) {
+      clearTimeout(hoverTimer)
+      hoverTimer = null
+    }
+    hoverTimer = setTimeout(trigger, 50)
   }
 }
 
@@ -231,8 +243,11 @@ const treeChangeHandler = (row?: CascaderSelectorData, rowIndex?: number, column
 // 列内数据翻页
 const getColumnPageData = (column: CascaderSelectorData[], columnIndex: number) => {
   if (getIsShowPagerInColumn(column, columnIndex)) {
-    const {page = pageDefaultParam.page, size = pageDefaultParam.size} = cascadePageInfo.value[columnIndex] || {}
-    return column.slice((page - 1) * size, page * size)
+    cascadePageInfo.value[columnIndex].page = cascadePageInfo.value[columnIndex].page || 1
+    cascadePageInfo.value[columnIndex].size = defaultPageSize
+    cascadePageInfo.value[columnIndex].total = column?.length || 0
+    const sliceStart = (cascadePageInfo.value[columnIndex].page - 1) * cascadePageInfo.value[columnIndex].size
+    return column.slice(sliceStart, sliceStart + cascadePageInfo.value[columnIndex].size)
   } else {
     return column
   }
@@ -267,6 +282,48 @@ const getMultipleLimit = (column?: CascaderSelectorData[], columnIndex?: number)
   }
   return result || 0
 }
+
+// 模糊搜索
+let filterTimer: NodeJS.Timeout | null = null
+
+const filterStr = ref('')
+const filterMethod = (val: string) => {
+  if (filterTimer !== null) {
+    clearTimeout(filterTimer)
+    filterTimer = null
+  }
+  filterTimer = setTimeout(() => {
+    filterStr.value = val
+  }, 400)
+  return true
+}
+
+const filterDataByStr = (data: CascaderSelectorData[], keyword = '', result: CascaderSelectorData[] = []) => {
+  if (!keyword) {
+    return data
+  }
+  for (const e of data || []) {
+    if (e.name.toLowerCase().includes(keyword.toLowerCase())) {
+      result.push(e)
+    } else if (e.children?.length) {
+      const children = filterDataByStr(e.children, keyword)
+      if (children?.length) {
+        e.children = children
+        result.push(e)
+      }
+    }
+  }
+  return result
+}
+
+watch(() => filterStr.value, (val) => {
+  dataForColumns.value = [filterDataByStr(JSON.parse(JSON.stringify(initialedData)), val)].filter(e => e?.length)
+  let columnIndex = 0
+  while (dataForColumns.value[columnIndex]?.[0]?.children?.length) {
+    hoverHandler(dataForColumns.value[columnIndex]?.[0], columnIndex, true)
+    columnIndex++
+  }
+}, {immediate: true})
 </script>
 
 <style scoped lang="less">
@@ -281,14 +338,14 @@ const getMultipleLimit = (column?: CascaderSelectorData[], columnIndex?: number)
     position: relative;
     overflow: hidden;
     white-space: nowrap;
-    display: flex; // 行充满 1/3
+    display: flex;
 
     .column {
       position: relative;
       display: inline-flex;
       flex-direction: column;
       border-left: 1px solid #eee;
-      flex: 1; // 行充满 2/3
+      flex: 1;
 
       &:first-child {
         border: none;
@@ -368,8 +425,54 @@ const getMultipleLimit = (column?: CascaderSelectorData[], columnIndex?: number)
         }
       }
     }
+
+    .tip-text {
+      user-select: none;
+      margin: auto;
+      color: var(--el-text-color-secondary);
+      text-align: center;
+      line-height: 26px;
+    }
   }
 }
+
+:deep(.el-select__tags) {
+  display: flex;
+  flex-wrap: nowrap;
+
+  .el-select-tags-wrapper {
+    display: flex !important;
+    flex-wrap: nowrap;
+    align-items: center;
+    min-width: 0;
+    flex: 2.5;
+    position: relative;
+    //overflow: hidden;
+
+    .el-tag.is-closable {
+      padding: 0 2px;
+      min-width: calc(2em + 14px);
+      flex: 1;
+      display: inline-flex;
+      white-space: nowrap;
+
+      .el-tag__content {
+        width: calc(100% - 14px);
+
+        .el-select__tags-text {
+          font-weight: bold;
+          display: block;
+        }
+      }
+    }
+  }
+
+  .el-select__input {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
 </style>
 <style lang="less">
 .cascader-selector {
@@ -381,7 +484,6 @@ const getMultipleLimit = (column?: CascaderSelectorData[], columnIndex?: number)
 
     .el-select-dropdown {
       max-width: none !important;
-      //min-width: 0 !important; // 行充满 3/3
     }
   }
 }
