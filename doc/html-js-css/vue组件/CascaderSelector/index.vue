@@ -10,7 +10,7 @@
                   {
                     name: 'flip',
                     options: {
-                      fallbackPlacements: ['bottom'],
+                      fallbackPlacements: ['bottom','top'],
                     },
                   },
                 ],
