@@ -10,7 +10,7 @@
                   {
                     name: 'flip',
                     options: {
-                      fallbackPlacements: ['bottom', 'left'],
+                      fallbackPlacements: ['bottom'],
                     },
                   },
                 ],
@@ -113,17 +113,19 @@ const dataPlain = ref<CascaderSelectorData[]>([]) // 给下拉列表，生成选
 const highlightIds = ref<{ parent: number[], active: number[], child: number[] }>({parent: [], active: [], child: []})
 
 let initialedData: CascaderSelectorData[] = []
-const initTreeData = (data: CascaderSelectorData[], level = 0, pid?: number) => {
+const initTreeData = (data: CascaderSelectorData[], level = 0, parent?: CascaderSelectorData) => {
   data = props.columnSort(data, level)
   data.forEach(e => {
     e._level = level
-    e._pid = pid
+    e._pid = parent?.id
+    e._idPath = [...parent?._idPath || [], e.id]
+    e._namePath = [...parent?._namePath || [], e.name]
     dataPlain.value.push(e) // 平铺数据
     if (currentActiveLevel === undefined && Array.isArray(activeId.value) && activeId.value.includes(e.id)) {
       currentActiveLevel = level
     }
     if (e.children?.length) {
-      initTreeData(e.children, level + 1, e.id)
+      initTreeData(e.children, level + 1, e)
     }
   })
 }
@@ -132,15 +134,14 @@ watch(() => props.modelValue, () => { // 绑定值改变时触发
   activeId.value = props.modelValue
 }, {immediate: true, deep: true})
 
-watch(() => props.data, () => { // 数据改变时触发
-  initialedData = JSON.parse(JSON.stringify(props.data)) as CascaderSelectorData[]
+watch(() => JSON.stringify(props.data || []), (val) => { // 数据改变时触发
+  initialedData = JSON.parse(val) as CascaderSelectorData[]
   dataPlain.value = []
   initTreeData(initialedData)
-
   dataForColumns.value = [initialedData].filter(e => e?.length)
   cascadePageInfo.value = [{page: 1, size: defaultPageSize, total: dataForColumns.value[0]?.length || 0}]
   highlightIds.value = findRelationNodeId(dataForColumns.value[0], (Array.isArray(activeId.value) ? activeId.value : [activeId.value]).filter(e => e) as number[])
-}, {immediate: true, deep: true})
+}, {immediate: true})
 
 watch(() => activeId.value, () => {
   highlightIds.value = findRelationNodeId(dataForColumns.value[0], (Array.isArray(activeId.value) ? activeId.value : [activeId.value]).filter(e => e) as number[])
@@ -202,9 +203,8 @@ const hoverHandler = (row?: CascaderSelectorData, columnIndex?: number, immediat
 }
 
 const treeClearHandler = () => {
-  emits('update:modelValue')
-  emits('clear')
   treeChangeHandler()
+  emits('clear', activeId.value)
 }
 
 const treeChangeHandler = (row?: CascaderSelectorData, rowIndex?: number, column?: CascaderSelectorData[], columnIndex?: number) => {

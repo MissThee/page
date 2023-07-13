@@ -4,4 +4,6 @@ declare type CascaderSelectorData = {
   children?: CascaderSelectorData[],
   _level?: number,
   _pid?: number,
+  _idPath?: number[],
+  _namePath?: string[]
 }
