@@ -1,7 +1,7 @@
 <template>
   <el-select ref="selectRef"
              v-model="activeId"
-             :teleported="true"
+             :teleported="props.teleported"
              popper-class="cascader-selector cascader-selector--custom-width"
              :clearable="props.clearable"
              collapse-tags
@@ -10,13 +10,14 @@
                   {
                     name: 'flip',
                     options: {
-                      fallbackPlacements: ['bottom','top'],
+                      fallbackPlacements: props.forcePopperPlace||['bottom','top'],
                     },
                   },
                 ],
              }"
              collapse-tags-tooltip
              :placeholder="props.placeholder"
+             @removeTag="removeTagHandler"
              @clear="treeClearHandler"
              :filterable='props.filterable'
              :filterMethod="filterMethod"
@@ -86,33 +87,39 @@ const props = withDefaults(defineProps<{
   clearable?: boolean,
   multiple?: boolean, // 是否多选
   forceSelectSameLevel?: boolean // true点击选中时，选中内容仅保留同级选中项
+  multipleTargetChildMode?: boolean // 点击时选中当前节点的子级
   multipleLimit?: number | number[] | ((column: CascaderSelectorData[], columnIndex: number) => number) // multiple 为true时，限制某层级可选中的个数；若forceSelectSameLevel也为true，则限定
   pager?: boolean | boolean[] | ((column: CascaderSelectorData[], columnIndex: number) => boolean)
   filterable?: boolean
-  columnSort?: (column: CascaderSelectorData[], columnIndex: number) => CascaderSelectorData[]
+  columnSort?: (column: CascaderSelectorData[], columnIndex: number) => CascaderSelectorData[],
+  teleported?: boolean //原下拉组件teleported，默认true
+  forcePopperPlace: string[]
 }>(), {
   data: () => [],
   // multiple: true,
   // multipleLimit: 2
   // filterable: true
-  columnSort: (c: CascaderSelectorData[], _: number) => c
+  columnSort: (c: CascaderSelectorData[], _: number) => c,
+  teleported: true
 })
-const emits = defineEmits(['update:modelValue', 'change', 'clear'])
+const emits = defineEmits(['update:modelValue', 'change', 'clear', 'removeTag'])
 const selectRef = ref()
 const dataForColumns = ref<CascaderSelectorData[][]>([])
 const activeId = ref<number | number[] | undefined>(props.multiple ? [] : undefined)
 
-let currentActiveLevel: number | undefined = undefined
+let currentActivePid: number | undefined = undefined
+
 const expandIds = ref<number[]>([]) // 记录每列展开的id
 
 const defaultPageSize = 20 // 分页参数
 const cascadePageInfo = ref<{ parentId?: number, page: number, size: number, total: number }[]>([]) // 依据parentId, 记录其子级分页状况
 
-const dataPlain = ref<CascaderSelectorData[]>([]) // 给下拉列表，生成选项
+const dataPlain = ref<CascaderSelectorData[]>([]) // 给原下拉列表用，生成选项
 
 const highlightIds = ref<{ parent: number[], active: number[], child: number[] }>({parent: [], active: [], child: []})
-
+// 初始化后的树数据
 let initialedData: CascaderSelectorData[] = []
+// 初始化给树数据增加一些辅助参数
 const initTreeData = (data: CascaderSelectorData[], level = 0, parent?: CascaderSelectorData) => {
   data = props.columnSort(data, level)
   data.forEach(e => {
@@ -121,8 +128,8 @@ const initTreeData = (data: CascaderSelectorData[], level = 0, parent?: Cascader
     e._idPath = [...parent?._idPath || [], e.id]
     e._namePath = [...parent?._namePath || [], e.name]
     dataPlain.value.push(e) // 平铺数据
-    if (currentActiveLevel === undefined && Array.isArray(activeId.value) && activeId.value.includes(e.id)) {
-      currentActiveLevel = level
+    if (currentActivePid === undefined && Array.isArray(activeId.value) && activeId.value.includes(e.id)) {
+      currentActivePid = e._pid
     }
     if (e.children?.length) {
       initTreeData(e.children, level + 1, e)
@@ -201,6 +208,16 @@ const hoverHandler = (row?: CascaderSelectorData, columnIndex?: number, immediat
     hoverTimer = setTimeout(trigger, 50)
   }
 }
+const removeTagHandler = (id) => {
+  if (Array.isArray(activeId.value)) {
+    const existIndex = activeId.value.indexOf(id)
+    if (existIndex !== -1) {
+      activeId.value.splice(existIndex, 1)
+    }
+    treeChangeHandler()
+  }
+  emits('removeTag', id)
+}
 
 const treeClearHandler = () => {
   treeChangeHandler()
@@ -212,43 +229,44 @@ const treeChangeHandler = (row?: CascaderSelectorData, rowIndex?: number, column
     if (!Array.isArray(activeId.value)) {
       activeId.value = []
     }
-    if (props.forceSelectSameLevel) { // 保持多选的内容在同一层级
-      if (currentActiveLevel !== columnIndex) {
-        if (activeId.value.length) {
-          ElMessage.warning('不可跨级多选')
-          return
-        } else {
-          currentActiveLevel = columnIndex
-        }
-        // activeId.value.length = 0
-        // currentActiveLevel = columnIndex
-      }
-    } else {
-      currentActiveLevel = undefined
-    }
     if (row) {
+      if (props.forceSelectSameLevel) { // 保持多选的内容在同一层级
+        if (currentActivePid !== row?._pid) {
+          if (activeId.value.length) {
+            ElMessage.warning('不可跨级多选')
+            return
+          } else {
+            currentActivePid = row?._pid
+          }
+          // activeId.value.length = 0
+          // currentActivePid = row?._pid
+        }
+      } else {
+        currentActivePid = undefined
+      }
       // 增加或删除选项
       const existIndex = activeId.value.indexOf(row?.id)
       if (existIndex === -1) {
-        if (props.multipleLimit !== undefined) {
-          const limitNum = getMultipleLimit(column, columnIndex)
-          if (limitNum === 1) { // 如果此列最多选1个，则直接切换到点击值
-            activeId.value.length = 0
-            activeId.value.push(row?.id)
-          } else if (limitNum === 0 || limitNum > activeId.value.length) {// 如果此列最多选大于1个，数量到达后，禁止再增加选中值
-            activeId.value.push(row?.id)
-          } else {
-            ElMessage.warning(`此层级最多可选择${limitNum}个`)
-          }
-        } else {
+        const limitNum = getMultipleLimit(column, columnIndex)
+        if (limitNum === undefined) {
           activeId.value.push(row?.id)
+        } else if (limitNum === 0) { // 如果此列最多选1个，则直接切换到点击值
+          ElMessage.warning(`此层级不可选择`)
+          activeId.value.length = 0
+        } else if (limitNum === 1) { // 如果此列最多选1个，则直接切换到点击值
+          activeId.value.length = 0
+          activeId.value.push(row?.id)
+        } else if (limitNum === 0 || limitNum > activeId.value.length) {// 如果此列最多选大于1个，数量到达后，禁止再增加选中值
+          activeId.value.push(row?.id)
+        } else {
+          ElMessage.warning(`此层级最多可选择${limitNum}个`)
         }
       } else {
         activeId.value.splice(existIndex, 1)
       }
     }
   } else {
-    currentActiveLevel = columnIndex
+    currentActivePid = row?._pid
     activeId.value = row?.id
   }
   emits('update:modelValue', activeId.value)
@@ -292,10 +310,7 @@ const getIsShowPagerInColumn = (column: CascaderSelectorData[], columnIndex: num
 }
 
 const getMultipleLimit = (column?: CascaderSelectorData[], columnIndex?: number) => {
-  if (!column || columnIndex === undefined) {
-    return 0
-  }
-  let result
+  let result = undefined
   if (Array.isArray(props.multipleLimit)) {
     result = props.multipleLimit[columnIndex]
   } else if (typeof props.multipleLimit === 'number') {
@@ -303,7 +318,7 @@ const getMultipleLimit = (column?: CascaderSelectorData[], columnIndex?: number)
   } else if (typeof props.multipleLimit === 'function') {
     result = props.multipleLimit(column, columnIndex)
   }
-  return result || 0
+  return result
 }
 
 // 模糊搜索
@@ -468,7 +483,7 @@ watch(() => filterStr.value, (val) => {
     flex-wrap: nowrap;
     align-items: center;
     min-width: 0;
-    flex: 2.5;
+    max-width: 70%;
     position: relative;
     //overflow: hidden;
 
