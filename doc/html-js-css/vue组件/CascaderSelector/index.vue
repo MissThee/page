@@ -93,7 +93,7 @@ const props = withDefaults(defineProps<{
   filterable?: boolean
   columnSort?: (column: CascaderSelectorData[], columnIndex: number) => CascaderSelectorData[],
   teleported?: boolean //原下拉组件teleported，默认true
-  forcePopperPlace: string[]
+  forcePopperPlace?: string[]
 }>(), {
   data: () => [],
   // multiple: true,
@@ -174,9 +174,12 @@ const getActiveRow = (): CascaderSelectorData | CascaderSelectorData[] | undefin
 let hoverTimer: NodeJS.Timer | null = null
 
 // 行hover事件，触发展开下级内容
-const hoverHandler = (row?: CascaderSelectorData, columnIndex?: number, immediate = false) => {
+const hoverHandler = (row?: CascaderSelectorData, columnIndex?: number, immediate = false, forceUpdateExpandState = false) => {
   const trigger = () => {
     if (row && columnIndex !== undefined) {
+      if (!forceUpdateExpandState && expandIds.value[columnIndex] === row.id) {
+        return
+      }
       if (row.children?.length) {
         // 展开行标记
         expandIds.value[columnIndex] = row.id
@@ -225,6 +228,9 @@ const treeClearHandler = () => {
 }
 
 const treeChangeHandler = (row?: CascaderSelectorData, rowIndex?: number, column?: CascaderSelectorData[], columnIndex?: number) => {
+  if (row?.stopClick) {
+    return
+  }
   if (props.multiple) { // 多选时
     if (!Array.isArray(activeId.value)) {
       activeId.value = []
@@ -250,9 +256,10 @@ const treeChangeHandler = (row?: CascaderSelectorData, rowIndex?: number, column
         const limitNum = getMultipleLimit(column, columnIndex)
         if (limitNum === undefined) {
           activeId.value.push(row?.id)
-        } else if (limitNum === 0) { // 如果此列最多选1个，则直接切换到点击值
+        } else if (limitNum === 0) { // 如果此列最多选0个，则不可选择
           ElMessage.warning(`此层级不可选择`)
           activeId.value.length = 0
+          return
         } else if (limitNum === 1) { // 如果此列最多选1个，则直接切换到点击值
           activeId.value.length = 0
           activeId.value.push(row?.id)
@@ -268,6 +275,7 @@ const treeChangeHandler = (row?: CascaderSelectorData, rowIndex?: number, column
   } else {
     currentActivePid = row?._pid
     activeId.value = row?.id
+    selectRef.value?.$refs?.tooltipRef?.hide?.()
   }
   emits('update:modelValue', activeId.value)
   // change事件返回参数：
@@ -358,7 +366,7 @@ watch(() => filterStr.value, (val) => {
   dataForColumns.value = [filterDataByStr(JSON.parse(JSON.stringify(initialedData)), val)].filter(e => e?.length)
   let columnIndex = 0
   while (dataForColumns.value[columnIndex]?.[0]?.children?.length) {
-    hoverHandler(dataForColumns.value[columnIndex]?.[0], columnIndex, true)
+    hoverHandler(dataForColumns.value[columnIndex]?.[0], columnIndex, true, true)
     columnIndex++
   }
 }, {immediate: true})
