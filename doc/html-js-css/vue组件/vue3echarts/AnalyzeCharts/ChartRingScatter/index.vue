@@ -186,8 +186,8 @@ const setDataForShow = () => {
     })
   }
   const maxWidthScale = 0.9
+  let scaleRate = panelRef.value.clientWidth * maxWidthScale / allBubbleWidth
   if (allBubbleWidth < panelRef.value.clientWidth * maxWidthScale) {
-    const scaleRate = panelRef.value.clientWidth * maxWidthScale / allBubbleWidth
     dataForShowTmp.forEach(e => {
       e.x = panelRef.value.clientWidth / 2 + (e.x - panelRef.value.clientWidth / 2) * scaleRate
     })
@@ -195,7 +195,7 @@ const setDataForShow = () => {
 
   // 修正中心对齐
   dataForShowTmp.forEach(e => {
-    e.x = e.x - (Math.abs(allBubbleRect.right - panelRef.value.clientWidth / 2) - Math.abs(panelRef.value.clientWidth / 2 - allBubbleRect.left)) / 2 * panelRef.value.clientWidth / allBubbleWidth
+    e.x = e.x - (Math.abs(allBubbleRect.right - panelRef.value.clientWidth / 2) - Math.abs(panelRef.value.clientWidth / 2 - allBubbleRect.left)) / 2 * scaleRate
   })
   dataForShow.value = dataForShowTmp
 }
