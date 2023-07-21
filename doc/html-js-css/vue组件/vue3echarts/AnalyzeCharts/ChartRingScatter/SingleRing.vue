@@ -14,6 +14,7 @@ import {EChartsType} from "echarts";
 import {onMounted, onUnmounted, ref, watch} from "vue";
 
 const props = withDefaults(defineProps<{
+  props: { key: string, color: string }[]
   isLoading?: boolean,
   option?: Record<string, any>// echarts配置，会在最后使用 setOption 合并到echarts配置中
   data: SingleRingData
@@ -34,14 +35,12 @@ const props = withDefaults(defineProps<{
 const chartEl = ref()
 const singleRingRef = ref()
 let chartInstance: EChartsType | null = null
-let chartOption: Record<string, any> = {}
 const updateView = () => {
   if (!chartInstance) {
     return
   }
-  chartOption = {
-    // animation: false,
-    color: ['#F7B500', '#3769FA', '#CFCFCF'],
+  const chartOption: Record<string, any> = {
+    animation: false,
     tooltip: {
       show: false
     },
@@ -50,7 +49,7 @@ const updateView = () => {
         name: '',
         type: 'pie',
         cursor: 'default',
-        radius: ['95%', '100%'],
+        // radius: ['95%', '100%'], // 在后面动态设置
         // itemStyle: {
         // borderRadius: 12,
         // borderColor: 'white',
@@ -72,25 +71,14 @@ const updateView = () => {
     ]
   }
   // 设置数据和配置
-  if (props.isLoading) {
-    chartOption.series[0].data = [{value: 0, name: '加载中', itemStyle: {color: '#eee'}}]
-    delete chartOption.series[0].data[1]
-  } else {
-    chartOption.series[0].data[0] = {
-      value: props.data.negative,
-      name: '负面体验',
+  props.props?.forEach((p, i) => {
+    chartOption.series[0].data[i] = {
+      value: props.data[p.key],
+      itemStyle: {color: p.color}
     }
-    chartOption.series[0].data[1] = {
-      value: props.data.positive,
-      name: '正面体验',
-    }
-    chartOption.series[0].data[2] = {
-      value: props.data.neutral,
-      name: '中立体验',
-    }
-    if (chartOption.series[0].data.reduce((total, item) => total + (item.value || 0), 0) === 0) {
-      chartOption.series[0].data = [{value: 0, name: '无数据', itemStyle: {color: '#eee'}}]
-    }
+  })
+  if (chartOption.series[0].data.reduce((total, item) => total + (item.value || 0), 0) === 0) {
+    chartOption.series[0].data = [{value: 0, name: '无数据', itemStyle: {color: '#eee'}}]
   }
   // 使用配置内容绘制
   chartInstance.setOption(chartOption, false, true)
@@ -102,10 +90,11 @@ const updateRingWidth = () => {
   if (!chartInstance) {
     return
   }
+  const ringWidth = 34
   const option = {
     series: [
       {
-        radius: [Math.round((1 - 12 / (singleRingRef.value.clientWidth || 1)) * 100) + '%', '100%']
+        radius: [Math.round((1 - ringWidth / (singleRingRef.value.clientWidth || 1)) * 100) + '%', '100%']
       }
     ]
   }

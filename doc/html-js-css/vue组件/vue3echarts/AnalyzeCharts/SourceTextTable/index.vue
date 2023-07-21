@@ -1,43 +1,59 @@
 <template>
   <div class="source-text-table">
     <div class="header">
+      <div class="charts-title">{{ props.title }}</div>
       <div class="operation">
-        <div class="select-button" @click="typeClickHandler(btnItem)" v-for="btnItem in btnData" :key="btnItem.id">
-          <div class="select-button__dot" :style="{backgroundColor:param.type === btnItem.id? btnItem.color:'transparent'}"/>
-          <span class="select-button__text">{{ btnItem.name }}</span>
-        </div>
+        <span style="margin-right: 10px;margin-left: 6px;color:#4E5969">体验效果: </span>
+        <el-select v-model="param.type" @change="typeChangeHandler">
+          <el-option v-for="item in btnData" :key="item.id" :label="item.name" :value="item.id"/>
+        </el-select>
       </div>
     </div>
     <div class="bottom">
-      <el-table row-key="id" v-loading="props.isLoading" :data="props.data" border>
-        <el-table-column v-if="props.label[0]==='序号'" :label="props.label[0]" header-align="center" align="center" label-class-name="table-label" type="index" width="200" :index="(i)=>(props.param.page-1)*props.param.size+i+1"/>
-        <el-table-column v-else :label="props.label[0]" header-align="center" align="center" label-class-name="table-label" prop="id" width="200"/>
-        <el-table-column :label="props.label[1]" header-align="center" label-class-name="table-label" prop="content">
-          <template #default="{row,$index}">
-            <div style="position:relative">
-              <el-scrollbar :ref="setScrollbarRef">
-                <div class="detail-text" :style="{height: isOpenRow[String($index)]?'': (19 * 7+ 'px')}">
-                  <div v-html="getTextWithHighlight(row)"/>
+      <el-table v-loading="props.isLoading" :data="props.data" border>
+        <el-table-column v-for="c in props.columns" :key="c.prop" :prop="c.prop" :label="c.label"
+                         header-align="center"
+                         align="center"
+                         label-class-name="table-label"
+                         :min-width="c.minWidth||''"
+                         :width="c.width||''"
+        >
+          <template v-if="c.hasPopover" #default="{row,$index,column}">
+            <el-popover :width="column.realWidth+30" placement="right" :disabled="!isCellTextOverflow[getRefKey(c.prop,$index)]" :persistent="false" :offset="-(column.realWidth)" :showArrow="false">
+              <template #reference>
+                <div class="detail-text" :style="{height: `calc( ${lineHeight}px * 4 )`,lineHeight: `${lineHeight}px`}">
+                  <!--  <div v-if="c.hasHighlight" v-html="getTextWithHighlight(row,c.prop)" :ref="(el)=>setContentRef(c.prop,$index,el)"/>-->
+                  <!--  <div v-else :ref="(el)=>setContentRef(c.prop,$index,el)">{{ row[c.prop] }}</div>-->
+                  <div v-html="c.hasHighlight ? getTextWithHighlight(row,c.prop) : row[c.prop]" ref="contentRef" :node-prop="c.prop" :node-index="$index"/>
                 </div>
-              </el-scrollbar>
-              <div class="switch-row-btn" :class="{'switch-row-btn--open':isOpenRow[String($index)]}" @click="openRowHandler($index)"/>
-            </div>
+              </template>
+              <div style="position: relative;overflow: hidden;height: 112px">
+                <el-scrollbar>
+                  <div class="detail-text" style="padding-right: 10px">
+                    <div v-if="c.hasHighlight" v-html="getTextWithHighlight(row,c.prop)"/>
+                    <div v-else>{{ row[c.prop] }}</div>
+                  </div>
+                </el-scrollbar>
+              </div>
+            </el-popover>
+            <div style="position: absolute;bottom:6px;right:4px;" v-if="isCellTextOverflow[getRefKey(c.prop,$index)]">...</div>
           </template>
         </el-table-column>
       </el-table>
-      <el-pagination
-        class="pager"
-        background
-        small
-        v-model:current-page="param.page"
-        v-model:page-size="param.size"
-        :total="props.total"
-        layout="slot, sizes, ->, prev, pager, next"
-        @currentChange="paramChangeHandler"
-        @sizeChange="paramChangeHandler"
-      >
-        <div style="font-size: inherit">显示第{{ (param.page - 1) * param.size + 1 }}-{{ param.page * param.size }}项结果，共{{ props.total }}项&nbsp;</div>
-      </el-pagination>
+      <el-config-provider :locale="pagerConfig">
+        <el-pagination
+          class="pager"
+          background
+          v-model:current-page="param.page"
+          v-model:page-size="param.size"
+          :total="props.total"
+          layout="->, slot, prev, pager, next, sizes, jumper"
+          @currentChange="paramChangeHandler"
+          @sizeChange="paramChangeHandler"
+        >
+          <div style="font-size: inherit">共{{ props.total }}条&nbsp;</div>
+        </el-pagination>
+      </el-config-provider>
     </div>
   </div>
 </template>
@@ -48,86 +64,85 @@ export default {
 </script>
 <script setup lang="ts">
 
-import {computed, nextTick, ref, watch} from "vue";
+import {onMounted, ref, watch} from "vue";
+import {ElConfigProvider} from "element-plus";
+import {colorNegative, colorNeutral, colorPositive} from "@/components/AnalyzeCharts/ChartColors.ts";
 
-const scrollbarRef = ref([])
+const contentRef = ref()
+const isCellTextOverflow = ref<Record<string, boolean>>({})
 
-export type SourceTextTableData = {
-  id: string,
-  content: string,
-  keyword: string[]
-}
 export type SourceTextParams = {
   type: 'p' | 'n' | 'm'
   page: number,
   size: number,
 }
 const props = withDefaults(defineProps<{
+  title: string,
+  columns: { label: string, prop: string, width?: number, minWidth?: number, hasPopover?: boolean, hasHighlight?: boolean }[]
   param: SourceTextParams,
   isLoading?: boolean
-  data: SourceTextTableData[]
+  data: Record<string, any>[]
   total?: number
-  label?: string[]
 }>(), {
   param: () => ({
-    type: 'p',
+    type: 'N',
     page: 1,
     size: 10,
-  }),
-  label: () => []
+  })
 })
-const isOpenRow = ref<Record<string, boolean>>({})
+
+const lineHeight = 20
 const btnData = [
-  {id: 'p', name: '正面体验', color: '#466AF2'},
-  {id: 'n', name: '负面体验', color: '#ECB73F'},
-  {id: 'm', name: '中立体验', color: '#999999'}
+  {id: 'P', name: '正面体验', color: colorPositive},
+  {id: 'N', name: '负面体验', color: colorNegative},
+  {id: 'M', name: '中立体验', color: colorNeutral}
 ]
 const emits = defineEmits(['change', 'update:param'])
 
 const param = ref(props.param)
 
 watch(() => props.param, (newVal) => {
-  param.value = JSON.parse(JSON.stringify(newVal))
+  param.value = {...param.value, ...newVal || {}}
 }, {deep: true})
 
-const setScrollbarRef = (el) => {
-  scrollbarRef.value.push(el)
-}
-
-watch(() => props.data, () => {
-  isOpenRow.value = {}
-  scrollbarRef.value = []
-  nextTick(() => {
-    scrollbarRef.value.forEach(scrollbarEl => {
-      if (scrollbarEl) {
-        scrollbarEl.setScrollTop(scrollbarEl.$el.getElementsByClassName('highlight-text')[0]?.offsetTop - 19 * 3 || 0)
-      }
+const updateTableOverflow = () => {
+  isCellTextOverflow.value = {}
+  setTimeout(() => {
+    contentRef.value?.forEach(el => {
+      const key = getRefKey(el.getAttribute('node-prop'), el.getAttribute('node-index'))
+      isCellTextOverflow.value[key] = el.clientHeight > lineHeight * 4
     })
   })
+}
+const getRefKey = (prop, index) => prop + ',' + index
+
+onMounted(() => {
+  updateTableOverflow()
+})
+watch(() => props.data, () => {
+  updateTableOverflow()
 }, {deep: true})
-const typeClickHandler = (btnItem) => {
-  param.value.type = btnItem.id
+
+const typeChangeHandler = (id) => {
+  param.value.type = id
   paramChangeHandler()
 }
 
-const activeColor = computed(() => btnData.find(e => e.id === param.value.type)?.color || 'gray')
-const htmlEncodeByRegExp = (str: string) => {
-  let temp = ''
-  if (str.length === 0) return ''
-  temp = str.replace(/&/g, '&amp;')
-  temp = temp.replace(/</g, '&lt;')
-  temp = temp.replace(/>/g, '&gt;')
-  temp = temp.replace(/\s/g, '&nbsp;')
-  temp = temp.replace(/'/g, '&#39;')
-  temp = temp.replace(/"/g, '&quot;')
-  return temp
-}
-const getTextWithHighlight = (item: SourceTextTableData) => {
+
+const getTextWithHighlight = (item: Record<string, any>, prop: string) => {
   let result = ''
-  if (item && item.content && item.keyword) {
-    result = item.content
+  if (item && item[prop] && item.keyword) {
+    result = item[prop];
     item.keyword.forEach((hitSentence) => {
-      result = result.replace(hitSentence, `<span class="highlight-text">${htmlEncodeByRegExp(hitSentence)}</span>`)
+      let temp = ''
+      if (hitSentence.length === 0) return ''
+      temp = hitSentence.replace(/&/g, '&amp;')
+      temp = temp.replace(/</g, '&lt;')
+      temp = temp.replace(/>/g, '&gt;')
+      temp = temp.replace(/\s/g, '&nbsp;')
+      temp = temp.replace(/'/g, '&#39;')
+      temp = temp.replace(/"/g, '&quot;')
+      result = result.replace(hitSentence, `<span class="highlight-text" style="background-color: ${btnData.find(e => e.id === props.param?.type)?.color}" >${temp}</span>`)
     })
   }
   return result
@@ -139,8 +154,15 @@ const paramChangeHandler = () => {
   emits('change', tmp)
 }
 
-const openRowHandler = (index) => {
-  isOpenRow.value[String(index)] = !isOpenRow.value[String(index)]
+const pagerConfig: any = {
+  el: {
+    pagination: {
+      pagesize: '条/页',
+      total: '共 {total} 条',
+      goto: '跳至',
+      pageClassifier: '页'
+    }
+  }
 }
 
 </script>
@@ -154,9 +176,13 @@ const openRowHandler = (index) => {
     position: relative;
     padding: 8px 0;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
 
     .operation {
-      display: inline-block;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
       vertical-align: bottom;
       margin-left: 10px;
 
@@ -189,78 +215,49 @@ const openRowHandler = (index) => {
 
   .bottom {
     :deep(.table-label) {
-      color: white;
-      background-color: v-bind(activeColor) !important;
+      color: black;
+      font-size: 14px;
+      background-color: #F4F6F9 !important;
+      border: none;
     }
 
-    //:deep(.el-scrollbar) {
-    //  width: 100%;
-    //  position: relative;
-    //  overflow: hidden;
-    //
-    //  &__view {
-    //    vertical-align: top;
-    //  }
-    //}
     .pager {
       margin-top: 5px;
       font-size: 12px;
     }
 
-    .detail-text {
-      white-space: pre-wrap;
-      word-break: break-all;
-      font-family: PingFangSC-Regular, PingFang SC, sans-serif;
-      font-weight: 400;
-      color: #333333;
-      font-size: 15px;
-      line-height: 19px;
-      text-overflow: ellipsis;
-      display: -webkit-box;
-      position: relative;
-      transition: height 0.3s ease-in-out;
-    }
 
-    .switch-row-btn {
-      position: absolute;
-      right: -10px;
-      bottom: 2px;
-
-      &:after {
-        transition: transform 0.3s ease-out;
-        content: '';
-        display: block;
-        border: 6px solid transparent;
-        border-top: 11px solid transparent;
-        border-bottom: 11px solid rgba(170, 170, 170, 0.8);
-        transform-origin: 50% 70%;
-        transform: rotateX(180deg);
-        cursor: pointer;
-      }
-
-      &--open {
-        &:after {
-          transform: rotateX(0deg);
-        }
-      }
-    }
-
-    :deep {
-      img {
-        display: block;
-        max-height: 100px !important;
-      }
-    }
-
-    :deep(.highlight-text) {
-      display: inline;
-      padding: 0 3px;
-      font-weight: bold;
-      line-height: 16px;
-      color: white;
-      background-color: v-bind(activeColor);
-    }
   }
 }
+
+.detail-text {
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: PingFangSC-Regular, PingFang SC, sans-serif;
+  font-weight: 400;
+  color: #333333;
+  font-size: 15px;
+  line-height: 19px;
+  position: relative;
+  transition: height 0.3s ease-in-out;
+  overflow: hidden;
+}
+
+:deep(img) {
+  display: block;
+  max-height: 100px !important;
+}
+
+:deep(.highlight-text) {
+  display: inline;
+  padding: 0 3px;
+  font-weight: bold;
+  line-height: 16px;
+  color: white;
+  background-color: gray;
+}
+</style>
+<style lang="less">
 
 </style>

@@ -1,8 +1,9 @@
 <template>
   <div class="chart-ring-scatter">
     <div class="header">
+      <div class="charts-title">{{ props.title }}</div>
       <div class="legend-wrapper">
-        <div class="legend" v-for="item in legendData" :key="item.name">
+        <div class="legend" v-for="item in settingData" :key="item.name">
           <div class="legend__dot" :style="{backgroundColor:item.color}"/>
           <div class="legend__text">{{ item.name }}</div>
         </div>
@@ -19,7 +20,7 @@
              :class="{'ring-wrapper--active':props.activeId!==null&&props.activeId===item.id}"
              @mousemove="e=>ringEnterHandler(item,e)"
              @mouseenter="e=>ringEnterHandler(item,e)"
-             @mouseleave="isPopoverShow = false"
+             @mouseleave="popoverPosition = {...popoverPosition,x:null,y:null}"
              @click="ringClickHandler(item)"
              v-for="item in dataForShow"
              :key="item.id"
@@ -30,56 +31,40 @@
                 left:item.x+'px'
               }"
         >
-          <SingleRing class="chart" :data="item"/>
+          <SingleRing class="chart" :props="settingData" :data="item"/>
           <div class="info" :style="{transform:`translate(0%,-50%) scale(${ Math.min(item.r/(totalHeight/2/2),1)})`}">
             <div class="name">{{ item.name }}</div>
-            <div class="percent">正面:{{ percentDigitalFormatter(item.positivePercent) }}%</div>
-            <div class="percent">负面:{{ percentDigitalFormatter(item.negativePercent) }}%</div>
+            <!--            <div class="percent">正面:{{ percentDigitalFormatter(item.positivePercent) }}%</div>-->
+            <!--            <div class="percent">负面:{{ percentDigitalFormatter(item.negativePercent) }}%</div>-->
           </div>
         </div>
         <div class="popover" ref="popoverRef"
              :class="{
-                'popover--show':isPopoverShow,
-                'popover--left':isPopoverLeftSide
+                'popover--show':popoverPosition.x && popoverPosition.y,
+                'popover--left':popoverPosition.isLeftSide
              }"
              :style="{left:popoverPosition.x+'px',top:popoverPosition.y+'px'}"
         >
           <table v-if="dataForHover">
             <tr>
-              <td>销售服务体验点</td>
+              <td>{{ dataForHover.name }}</td>
               <td>{{ dataForHover.total }}</td>
-            </tr>
-            <tr>
-              <td>整体体验点占比</td>
-              <td>{{ percentDigitalFormatter(dataForHover.percent) }}%</td>
+              <td v-if="dataForHover.percent">{{ percentDigitalFormatter(dataForHover.percent) || 0 }}%</td>
             </tr>
             <tr class="split"/>
-            <tr>
-              <td>正面体验点</td>
-              <td>{{ dataForHover.positive }}</td>
-            </tr>
-            <tr>
-              <td>场景内占比</td>
-              <td>{{ percentDigitalFormatter(dataForHover.positivePercent) }}%</td>
-            </tr>
-            <tr class="split"/>
-            <tr>
-              <td>负面体验点</td>
-              <td>{{ dataForHover.negative }}</td>
-            </tr>
-            <tr>
-              <td>场景内占比</td>
-              <td>{{ percentDigitalFormatter(dataForHover.negativePercent) }}%</td>
-            </tr>
-            <tr class="split"/>
-            <tr>
-              <td>中立体验点</td>
-              <td>{{ dataForHover.neutral }}</td>
-            </tr>
-            <tr>
-              <td>场景内占比</td>
-              <td>{{ percentDigitalFormatter(dataForHover.neutralPercent) }}%</td>
-            </tr>
+            <template v-for="p in settingData" :key="p.key">
+              <tr>
+                <td>
+                  <div :style="{backgroundColor:p.color}" style="width: 8px;height:8px;display: inline-block;margin-right: 5px;"/>
+                  <span>{{ p.name }}</span>
+                </td>
+                <td>{{ dataForHover[p.key] }}</td>
+                <td>
+                  <span>{{ percentDigitalFormatter(dataForHover[p.key + 'Percent']) }}</span>
+                  <span v-if="dataForHover[p.key + 'Percent'] !== undefined">%</span>
+                </td>
+              </tr>
+            </template>
           </table>
         </div>
       </div>
@@ -96,13 +81,15 @@ import SingleRing from "./SingleRing.vue";
 import {percentDigitalFormatter} from "../NumFormatter";
 import {nextTick, onMounted, onUnmounted, ref, watch} from "vue";
 import setBubbleInRect from "./setBubbleInRect.ts";
+import {colorNegative, colorNeutral, colorPositive} from "@/components/AnalyzeCharts/ChartColors.ts";
 
-const legendData = [
-  {name: '正面体验', color: '#3769FA',},
-  {name: '负面体验', color: '#F7B500',},
-  {name: '中立体验', color: '#CFCFCF',}
+const settingData: { key: string, name: string, color: string }[] = [
+  {key: 'positive', name: '正面体验', color: colorPositive},
+  {key: 'neutral', name: '中立体验', color: colorNeutral},
+  {key: 'negative', name: '负面体验', color: colorNegative},
 ]
 const props = withDefaults(defineProps<{
+  title?: string,
   data: ChartRingScatterData[],
   activeId?: number | null
 }>(), {
@@ -110,17 +97,13 @@ const props = withDefaults(defineProps<{
   activeId: null
 })
 
-const totalHeight = 268
+const totalHeight = 300
 const minGap = 1
 
 const panelRef = ref()
 const popoverRef = ref()
 const dataForShow = ref<ChartRingScatterDataForShow[]>([])
 
-const isPopoverLeftSide = ref(false)
-const isPopoverShow = ref(false)
-const dataForHover = ref<ChartRingScatterDataForShow>()
-const popoverPosition = ref<{ x: number, y: number }>({x: 0, y: 0})
 
 const emits = defineEmits(['click'])
 
@@ -163,7 +146,6 @@ const setDataForShow = () => {
     bubbleMaxY = Math.max(bubbleMaxY, Math.abs(e.y))
   })
   allBubbleWidth = Math.max(0, allBubbleRect.right - allBubbleRect.left)
-  // console.log('allBubbleWidth',allBubbleWidth)
   allBubbleHeight = Math.max(0, allBubbleRect.top - allBubbleRect.bottom)
 
   // 总高度不够时，按比例纵向移动
@@ -185,32 +167,34 @@ const setDataForShow = () => {
       e.r = e.r * scaleRate
     })
   }
-  const maxWidthScale = 0.9
-  let scaleRate = panelRef.value.clientWidth * maxWidthScale / allBubbleWidth
-  if (allBubbleWidth < panelRef.value.clientWidth * maxWidthScale) {
+  const scaleRate = panelRef.value.clientWidth / allBubbleWidth
+  if (allBubbleWidth < panelRef.value.clientWidth) {
     dataForShowTmp.forEach(e => {
       e.x = panelRef.value.clientWidth / 2 + (e.x - panelRef.value.clientWidth / 2) * scaleRate
     })
   }
-
   // 修正中心对齐
   dataForShowTmp.forEach(e => {
     e.x = e.x - (Math.abs(allBubbleRect.right - panelRef.value.clientWidth / 2) - Math.abs(panelRef.value.clientWidth / 2 - allBubbleRect.left)) / 2 * scaleRate
   })
   dataForShow.value = dataForShowTmp
 }
+// ----------------- 悬浮窗 ----------------
+
+const dataForHover = ref<ChartRingScatterDataForShow>()
+const popoverPosition = ref<{ x: number | null, y: number | null, isLeftSide: boolean }>({x: null, y: null, isLeftSide: false})
 const ringEnterHandler = (item, e: MouseEvent) => {
-  isPopoverShow.value = true
   dataForHover.value = item
   nextTick(() => {
     if (e) {
-      popoverPosition.value = {
-        x: item.x + e.offsetX - item.r,
-        y: -item.y + e.offsetY - item.r
-      }
       const popoverRect = popoverRef.value.getBoundingClientRect()
       const panelRect = panelRef.value.getBoundingClientRect()
-      isPopoverLeftSide.value = panelRect.width - popoverPosition.value.x < popoverRect.width
+      popoverPosition.value = {
+        x: item.x + e.offsetX - item.r,
+        y: Math.min(-item.y + e.offsetY - item.r, totalHeight / 2 - popoverRect.height),
+        isLeftSide: false,
+      }
+      popoverPosition.value.isLeftSide = panelRect.width - popoverPosition.value.x < popoverRect.width
     }
   })
 }
@@ -228,7 +212,12 @@ const ringClickHandler = (item) => {
   position: relative;
 
   .header {
-    margin-bottom: 8px;
+    left: 0;
+    margin: 0 30px 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 9;
 
     .legend-wrapper {
       display: flex;
@@ -241,14 +230,15 @@ const ringClickHandler = (item) => {
         white-space: nowrap;
 
         &__dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
+          width: 10px;
+          height: 10px;
+          //border-radius: 50%;
         }
 
         &__text {
           margin-left: 5px;
-          font-size: 12px;
+          font-size: 14px;
+          color: #4E5969;
         }
       }
 
@@ -268,10 +258,10 @@ const ringClickHandler = (item) => {
       top: 50%;
       left: 0;
       right: 0;
-      //border: 1px dashed #D8E1E5;
-      background-image: linear-gradient(to right, #f6f3f3 0%, #f6f3f3 70%, transparent 70%);
-      background-size: 30px;
-      background-repeat: repeat-x;
+      //background-image: linear-gradient(to right, #f6f3f3 0%, #f6f3f3 70%, transparent 70%);
+      //background-size: 30px;
+      //background-repeat: repeat-x;
+      background-color: #F2F3F5;
 
       &--top {
         top: 0;
@@ -289,8 +279,7 @@ const ringClickHandler = (item) => {
       top: 0;
       width: 8px;
       height: 100%;
-      background: linear-gradient(180deg, #466AF2 0%, #FFFFFF 50%, #ECB73F 100%);
-      border-radius: 0 100px 100px 0;
+      background: linear-gradient(180deg, #165DFF 0%, rgba(22, 93, 255, 0.4) 20%, #FFFFFF 50%, rgba(242, 127, 66, 0.4) 80%, #F27F42 100%);
     }
 
     .panel {
@@ -336,12 +325,14 @@ const ringClickHandler = (item) => {
         }
 
         .info {
+          line-height: 1.2em;
           pointer-events: none;
           z-index: 2;
           position: absolute;
-          width: 100%;
+          margin-left: 5%;
+          width: 90%;
           top: 50%;
-          font-size: 18px;
+          font-size: 17px;
           color: inherit;
           text-align: center;
           transform: translate(0, -50%);
@@ -351,11 +342,12 @@ const ringClickHandler = (item) => {
             word-break: break-all;
             white-space: normal;
             margin-bottom: 2px;
-            font-weight: 600;
+            font-weight: 500;
           }
 
           .percent {
             white-space: nowrap;
+            font-size: 16px;
           }
         }
 
@@ -376,7 +368,7 @@ const ringClickHandler = (item) => {
       white-space: nowrap;
       transform: translateX(15px);
       opacity: 0;
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+      box-shadow: 0px 9px 28px 8px rgba(0, 0, 0, 0.05), 0px 6px 16px 0px rgba(0, 0, 0, 0.08), 0px 3px 6px -4px rgba(0, 0, 0, 0.12);
 
       &--show {
         opacity: 1;
@@ -393,10 +385,25 @@ const ringClickHandler = (item) => {
       tr {
         text-align: left;
 
-        td:last-child {
-          min-width: 50px;
+        td {
+          padding-right: 15px;
           text-align: right;
+          color: #1D2129;
+          white-space: nowrap;
+
+          &:last-child {
+            padding-right: 0;
+          }
+
+          &:first-child {
+            padding-right: 20px;
+            color: #86909C;
+            font-weight: bold;
+            text-align: left;
+          }
+
         }
+
       }
     }
   }

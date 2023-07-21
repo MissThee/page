@@ -26,7 +26,11 @@ import {EChartsType} from "echarts";
 
 export interface ChartMapData {
   name: string,
-  value: number
+  value: number,
+  detail?: [
+    name: string,
+    value: number,
+  ]
 }
 
 const props = withDefaults(defineProps<{
@@ -39,15 +43,10 @@ const props = withDefaults(defineProps<{
   title: '',
   option: () => ({})
 })
-const colorTmp = new color(colorDefault)
-
-const colors = [
-  `rgba(${colorTmp.red()},${colorTmp.green()},${colorTmp.blue()},${0.2})`,
-  `rgba(${colorTmp.red()},${colorTmp.green()},${colorTmp.blue()},${0.8})`
-]
-
-
-const baseColor = `rgba(${colorTmp.red()},${colorTmp.green()},${colorTmp.blue()},${0.05})`
+const getOpacityColor = (hexColor: string, opacity: number) => {
+  const colorTmp = new color(hexColor)
+  return `rgba(${colorTmp.red()},${colorTmp.green()},${colorTmp.blue()},${opacity})`
+}
 
 const chartEl = ref()
 let chartInstance: EChartsType | null = null
@@ -58,20 +57,19 @@ const updateView = () => {
   const minVal = sortedData?.[0] || 0
 
   const getDataColorByValue = (val) => {
-    if (!val && val !== 0) {
-      return baseColor
-    }
     const opacityMin = 0.2
     const opacityMax = 0.8
     let opacity = opacityMin
-    if (maxVal === 0 && minVal === 0) {
+    if (!val && val !== 0) {
+      opacity = 0.05
+    } else if (maxVal === 0 && minVal === 0) {
       opacity = opacityMin
     } else if (maxVal !== 0 && maxVal === minVal) {
       opacity = opacityMax
     } else if (maxVal > minVal) {
       opacity = (val - minVal) / (maxVal - minVal) * (opacityMax - opacityMin) + opacityMin
     }
-    return `rgba(${colorTmp.red()},${colorTmp.green()},${colorTmp.blue()},${opacity})`
+    return getOpacityColor(colorDefault, opacity)
   }
   const chartOption: Record<string, any> = {
     animation: false,
@@ -79,7 +77,28 @@ const updateView = () => {
       trigger: 'item',
       borderColor: 'transparent',
       formatter: (params: any) => {
-        return params.name ? `
+        if (!params.name) {
+          return undefined// 不显示tooltip
+        }
+        if (!params.value && params.value !== 0) {
+          return params.name
+        }
+        const dataDetail = props.data?.[params.dataIndex]?.detail
+        if (dataDetail?.length) {
+          let result = '<table style="position: relative;text-align: left;">'
+          result += dataDetail.map(e => `
+  <tr>
+    <td colspan="4">${e.name}</td>
+  </tr>
+  <tr>
+    <td style="display: inline-block;background-color: ${getDataColorByValue(e.value)};height:0.6em;width: 0.6em;margin-right:5px"/>
+    <td style="display: inline-block">声量</td>
+    <td style="display: inline-block;min-width: 4em;text-align: right;margin-left: 5px">${e.value || 0}</td>
+  </tr>`).join('')
+          result += '</table>'
+          return result;
+        }
+        return `
 <table style="position: relative;text-align: left;">
   <tr>
     <td colspan="4">${params.name}</td>
@@ -90,39 +109,9 @@ const updateView = () => {
     <td style="display: inline-block;min-width: 4em;text-align: right;margin-left: 5px">${params.value || 0}</td>
   </tr>
 </table>
-      ` : undefined
-      } //'{b}<br/>{c}'
+      `
+      }
     },
-    // toolbox: {
-    //   show: true,
-    //   orient: 'vertical',
-    //   left: 'right',
-    //   top: 'center',
-    //   feature: {
-    //     dataView: {readOnly: false},
-    //     restore: {},
-    //     saveAsImage: {}
-    //   }
-    // },
-    // visualMap: { // 分段颜色 和 图例
-    //   show: false,
-    //   type: 'piecewise',
-    //   splitNumber: 10, // 连续型数据，总共分几段
-    //   // pieces: [
-    //   //   {gt: 15000},            // (1500, Infinity]
-    //   //   {gt: 10000, lte: 15000},  // (900, 1500]
-    //   //   {gt: 3000, lte: 10000},  // (310, 1000]
-    //   //   {gt: 2000, lte: 3000},   // (200, 300]
-    //   //   {gt: 1, lte: 2000, label: '1 到 2000（自定义label）'},       // (10, 200]
-    //   //   // {value: 123, label: '123（自定义特殊颜色）', color: 'grey'},  // [123, 123]
-    //   //   // {lt: 5}                 // (-Infinity, 5)
-    //   // ],
-    //   min: 0,
-    //   max: props.data?.map(e => e.value)?.sort((a, b) => a > b ? 1 : -1)?.slice(-1)[0] || 1,
-    //   inRange: {
-    //     color: colors
-    //   },
-    // },
     geo: {
       map: 'ZH',
       roam: false,
@@ -143,7 +132,7 @@ const updateView = () => {
       itemStyle: {
         borderWidth: 1,
         borderColor: 'white',
-        areaColor: baseColor
+        areaColor: getDataColorByValue()
       },
       select: false,
       emphasis: {
@@ -217,14 +206,6 @@ const updateView = () => {
   if (chartInstance) {
     chartInstance.setOption(chartOption, {notMerge: true, lazyUpdate: true, replaceMerge: ['series']})
     chartInstance.setOption(props.option || {}, false, true)
-    // 设置高亮区域（高亮使用选中的区块效果实现。高亮效果留给鼠标hover，只有红边框，不变色）
-    // setTimeout(() => {
-    //   chartInstance?.dispatchAction({type: 'unselect', seriesIndex: 0})
-    //   const highlightNameArr = Array.isArray(props.highlightName) ? props.highlightName : [props.highlightName]
-    //   highlightNameArr.forEach(name => {
-    //     chartInstance?.dispatchAction({type: 'select', seriesIndex: 0, name: name})
-    //   })
-    // })
   }
 }
 

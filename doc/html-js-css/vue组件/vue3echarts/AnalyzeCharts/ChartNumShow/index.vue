@@ -1,15 +1,16 @@
 <template>
-  <div class="num-show">
+  <div class="chart-num-show">
     <div class="header">
-      <div class="charts-title">客户声量</div>
-      <img v-if="!props.noTrend" class="charts-icon" :src="HomeAssets.trend" alt="" @click="trendClickHandler"/>
+      <div>
+        <div class="charts-title">{{ props.title }}</div>
+      </div>
     </div>
-    <div class="container">
+    <div class="body">
       <div class="panel">
-        <div class="label">分析数据量</div>
-        <div class="num">
-          <AnimateNum :num="props.num" :formatter="e=>(e===null||e===undefined)?'-':e"/>
-          <span>条</span>
+        <span class="label">客户声量</span>
+        <div class="sub-label">
+          <span class="num">{{ props.data }}</span>
+          <span class="unit">条</span>
         </div>
       </div>
     </div>
@@ -18,75 +19,75 @@
 
 <script lang="ts">
 export default {
-  name: "ChartNumShow"
+  name: 'ChartNumShow'
 }
 </script>
-
-<script setup lang="ts">
-
-import AnimateNum from "@/components/AnimateNum.vue";
-import * as HomeAssets from 'home/assets/index.ts'
+<script lang="ts" setup>
 
 const props = withDefaults(defineProps<{
-  num?: number,
-  noTrend?: boolean
-}>(), {})
-const emits = defineEmits(['trendClick'])
-const trendClickHandler = () => {
-  emits('trendClick')
-}
+  title?: string,
+  data?: number,
+}>(), {
+  title: '',
+})
+
+
 </script>
 
-<style scoped lang="less">
-.num-show {
+<style lang="less" scoped>
+.chart-num-show {
   height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-  justify-content: center;
+  position: relative;
+  overflow: hidden;
 
   .header {
+    left: 0;
+    position: absolute;
+    margin: 0 30px 10px 0;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-
-    .trend {
-      cursor: pointer;
-      height: 21px;
-      width: 21px;
-    }
+    align-items: center;
+    z-index: 9;
   }
 
-  .container {
-    flex: 1;
+  .body {
+    height: 100%;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
     align-items: center;
 
     .panel {
+      margin: auto;
+      height: 190px;
+      width: 190px;
+      border: 1px solid var(--el-color-primary);
       border-radius: 50%;
-      height: 220px;
-      width: 220px;
-      border: 2px solid #45dfe0;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
 
       .label {
-        font-size: 18px;
+        font-size: 20px;
+        font-family: SimHei, sans-serif;
         font-weight: bold;
       }
 
-      .num {
-        white-space: nowrap;
-        font-size: 36px;
-        font-weight: bold;
+      .sub-label {
+        display: flex;
+        align-items: center;
+
+        .num {
+          font-size: 38px;
+          line-height: 38px;
+        }
+
+        .unit {
+          font-size: 30px;
+          line-height: 30px;
+          font-weight: 500;
+        }
       }
     }
   }
-
 }
 </style>

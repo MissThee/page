@@ -1,13 +1,15 @@
+import {ChartCascadeGroupProgressData} from "@/components/AnalyzeCharts/ChartCascadeGroupProgress/index.vue";
+
 export const cascadeGroupDataConvert = (data: Record<string, any>[]) =>
   data.map(e => {
-    const tmp: Record<string, any> = {
+    const tmp: ChartCascadeGroupProgressData = {
       id: e.id,
-      name: e.kpi_name,
-      positive: e.p_number, // 圆环蓝色
+      name: e.name,
+      positive: e.p_number,
       positivePercent: e.p_percent,
-      negative: e.n_number, // 圆环橙色
+      negative: e.n_number,
       negativePercent: e.n_percent,
-      neutral: e.m_number, // 圆环灰色
+      neutral: e.m_number,
       neutralPercent: e.m_percent,
       parentId: e.parent_id
     }

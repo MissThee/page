@@ -3,9 +3,8 @@
   <div class="chart-line">
     <div class="header">
       <div>
-        <div class="charts-title"> {{ props.title }}</div>
+        <div class="charts-title">{{ props.title }}</div>
       </div>
-      <img class="charts-icon" v-if="!props.noDownload" @click="emits('download')" :src="HomeAssets.download" alt="download"/>
     </div>
     <div ref="chartEl" class="chart-line__chart"/>
   </div>
@@ -21,6 +20,9 @@ import * as echarts from 'echarts'
 import {onBeforeUnmount, onMounted, ref, watch} from "vue";
 import {percentDigitalFormatter} from "../NumFormatter.ts";
 import * as HomeAssets from "home/assets";
+import Color from 'color';
+import {colorDefault, colorNegative, colorNeutral, colorPositive} from "@/components/AnalyzeCharts/ChartColors.ts";
+import {EChartsType} from "echarts";
 
 export type ChartLineData = {
   labels: string[],
@@ -30,8 +32,8 @@ const props = withDefaults(defineProps<{
   title?: string,
   data?: ChartLineData,
   isPercent?: boolean,
+  hasAreaColor?: boolean,
   option?: Record<string, any>
-  noDownload?: boolean
 }>(), {
   title: '',
   data: () => ({
@@ -44,31 +46,28 @@ const emits = defineEmits(['download'])
 
 let currentMinZoomWidth = 100
 const isAutoHideLabel = ref(false)
-const toolTipPosition = (point: [x: number, y: number], params: any, dom: HTMLElement, rect: { x: number, y: number, width: number, height: number }, size: { contentSize: [width: number, height: number], viewSize: [width: number, height: number] }) => {
-  let [x, y] = point
-  if (x < size.viewSize[0] / 2) {
-    x = Math.min(x, size.viewSize[0] - size.contentSize[0])
-  } else {
-    x = Math.max(0, x - size.contentSize[0])
-  }
-  y = Math.min(size.viewSize[1] - size.contentSize[1], y)
-  y = Math.max(0, y - 10)
-  return [x, y];
-}
 const chartEl = ref()
-let chartInstance = null
+let chartInstance: EChartsType | null = null
 let chartOption: Record<string, any> = {
+  animation: false,
+  color: [colorPositive, colorNegative, colorNeutral],
+  grid: {
+    bottom: 40,
+    top: 40,
+    left: 40,
+    right: 30
+  },
   tooltip: {
     show: true,
+    borderColor:'transparent',
     trigger: 'axis',
-    position: toolTipPosition,
     formatter(params) {
       let result = `<div>`;
-      result += `<div>${params[0].axisValue}</div>`
+      result += `<div style="text-align: left">${params[0].axisValue}</div>`
       for (const index in params) {
         result += `
 <div style="white-space: nowrap;display: flex;align-items: center;overflow: hidden;">
-    <div style="display: inline-block;height: 10px;width:10px;border-radius: 50%;margin-right:10px;background-color:${params[index].color}" ></div>
+    <div style="display: inline-block;height: 2px;width:10px;margin-right:10px;background-color:${params[index].color}" ></div>
     <div style="display:flex;flex:1;font-size: 14px;text-align: left;font-weight: 500;color: #555555;">
        <div style="flex:1;margin-right:10px">${params[index].seriesName}:</div>
        <div>
@@ -100,18 +99,19 @@ let chartOption: Record<string, any> = {
     type: 'category',
     data: [],
     axisLine: {
-      show: true,
+      show: false,
       lineStyle: {
-        color: "#6f6f6f",
+        color: "#F2F3F5",
       },
     },
     axisTick: {
-      show: false,
+      show: true,
       alignWithLabel: true
     },
     axisLabel: {
-      show: true, // echarts的label不会自动换行，自行添加label替代
-      interval: 0, // 不自动隐藏横轴的label
+      show: true,
+      // interval: 0, // 不自动隐藏横轴的label
+      color: '#86909C'
     }
   },
   yAxis: {
@@ -119,25 +119,25 @@ let chartOption: Record<string, any> = {
     min: 0,
     minInterval: props.isPercent ? 'auto' : 1,
     type: 'value',
-    axisLine: {
+    // axisLine: {
+    // show: true,
+    // lineStyle: {
+    //   color: "#cccccc"
+    // },
+    // },
+    splitLine: {
       show: true,
       lineStyle: {
-        color: "#cccccc"
-      },
-    },
-    splitLine: {
-      show: false,
-      lineStyle: {
-        type: 'dotted',
+        // type: 'line',
         width: 1,
-        color: "#cccccc"
+        color: "#F2F3F5"
       },
       noZero: true
     },
     axisLabel: {
       formatter: '{value}' + (props.isPercent ? '%' : ''),
       show: true,
-      color: '#6f6f6f'
+      color: '#B8BCC4'
     }
   },
   label: {
@@ -161,43 +161,45 @@ let chartOption: Record<string, any> = {
     // }
   ],
   legend: {
+    right: 30,
     show: true,
     // selectedMode: false,
-    left: 100,
+    // left: 100,
     itemGap: 30,
     type: 'scroll',
-    icon: 'circle',
+    icon: 'path://M0 10 H 100 V 30 H 0 Z',
     itemHeight: 8,
-    itemWidth: 8,
+    itemWidth: 12,
     itemStyle: {
       borderWidth: 0
     }
   },
-  dataZoom: [
-    {
-      type: 'slider',
-      show: true,
-      xAxisIndex: [0, 1],
-      start: 0,
-      end: 100,
-      height: 13,
-      handleSize: 12,
-      handleIcon: 'path://M512 512m-208 0a6.5 6.5 0 1 0 416 0 6.5 6.5 0 1 0-416 0Z M512 192C335.264 192 192 335.264 192 512c0 176.736 143.264 320 320 320s320-143.264 320-320C832 335.264 688.736 192 512 192zM512 800c-159.072 0-288-128.928-288-288 0-159.072 128.928-288 288-288s288 128.928 288 288C800 671.072 671.072 800 512 800z',
-      // showDataShadow: false,
-      moveHandleSize: 0, // 去除滑动区上边的大横条按钮
-      moveOnMouseWheel: true,
-      fillerColor: 'rgba(0,0,0,0.2)',
-      filterMode: 'empty'
-    },
-    {
-      type: 'inside',
-      zoomOnMouseWheel: false,
-      moveOnMouseWheel: true,
-      moveOnMouseMove: true,
-      preventDefaultMouseMove: true,
-      filterMode: 'empty'
-    }
-  ]
+  // dataZoom: [
+  //   {
+  //     bottom: 0,
+  //     type: 'slider',
+  //     show: true,
+  //     xAxisIndex: [0, 1],
+  //     start: 0,
+  //     end: 100,
+  //     height: 13,
+  //     handleSize: 12,
+  //     handleIcon: 'path://M512 512m-208 0a6.5 6.5 0 1 0 416 0 6.5 6.5 0 1 0-416 0Z M512 192C335.264 192 192 335.264 192 512c0 176.736 143.264 320 320 320s320-143.264 320-320C832 335.264 688.736 192 512 192zM512 800c-159.072 0-288-128.928-288-288 0-159.072 128.928-288 288-288s288 128.928 288 288C800 671.072 671.072 800 512 800z',
+  //     // showDataShadow: false,
+  //     moveHandleSize: 0, // 去除滑动区上边的大横条按钮
+  //     moveOnMouseWheel: true,
+  //     fillerColor: 'rgba(0,0,0,0.2)',
+  //     filterMode: 'empty'
+  //   },
+  //   {
+  //     type: 'inside',
+  //     zoomOnMouseWheel: false,
+  //     moveOnMouseWheel: true,
+  //     moveOnMouseMove: true,
+  //     preventDefaultMouseMove: true,
+  //     filterMode: 'empty'
+  //   }
+  // ]
 }
 // 调整数据缩放等级(仅再数据变更时触发即可)
 const updateZoomData = () => {
@@ -249,15 +251,21 @@ const updateZoomData = () => {
     }]
   }
 }
+
 const updateView = () => {
-  if (props.data && props.data.labels && props.data.values) {
-    chartOption.xAxis.data = props.data.labels.map(e => String(e || '')) // x轴数据
-    props.data.values?.forEach((e, index) => {
+  if (props.data) {
+    chartOption.xAxis.data = props.data?.labels?.map(e => String(e || '')) || [] // x轴数据
+    chartOption.series.length = 0
+    props.data?.values?.forEach((e, index) => {
       chartOption.series[index] = {
         name: e.name,
         cursor: 'default',
         smooth: false,
-        symbolSize: 6,
+        symbol: 'circle',
+        symbolSize: 4,
+        emphasis: {
+          scale: 2.5
+        },
         itemStyle: {
           color: e.color,
         },
@@ -266,13 +274,26 @@ const updateView = () => {
         },
         data: e.data || [],
         type: 'line',
-        z: props.data.values.length - index + 1
+        z: props.data.values.length - index + 1,
+        areaStyle: props.hasAreaColor ? {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              {offset: 0.1, color: `rgba(${Color(e.color || chartOption?.color[index] || 'white').array().join(',')}, 0.2)`},
+              {offset: 1, color: 'rgba(255,255,255,0)'}
+            ],
+          },
+        } : undefined
       }
     })
     if (chartInstance) {
-      chartInstance.setOption(chartOption, false, true)
-      chartInstance.setOption(props.option || {}, false, true)
-      chartInstance.setOption(updateZoomData() || {}, false, true)
+      chartInstance.setOption(chartOption, {notMerge: false, lazyUpdate: true, replaceMerge: ['series']})
+      chartInstance.setOption(props.option || {}, {notMerge: false, lazyUpdate: true})
+      // chartInstance.setOption(updateZoomData() || {}, false, true)
     }
   }
 }
@@ -283,29 +304,19 @@ const resize = () => {
   })
 }
 
-watch(() => props.data, () => {
+watch(() => [props.data, props.option, props.isPercent], () => {
   updateView()
 }, {
   deep: true
-})
-
-watch(() => props.option, () => {
-  updateView()
-}, {
-  deep: true
-})
-
-watch(() => props.isPercent, () => {
-  updateView()
 })
 
 onMounted(() => {
   chartInstance = echarts.init(chartEl.value as HTMLElement, '', {devicePixelRatio: window.devicePixelRatio * 2})// 避免transform缩放导致图形模糊，暂时使用2。值太小，大图形会模糊；值太大，小图形会有锯齿边
-  chartInstance.on('datazoom', () => {
-    const dataZoomCurrent = chartInstance.getOption()?.dataZoom?.[0] // 用getOption获取改变的值
-    const zoomWidth = (dataZoomCurrent?.end || 0) - (dataZoomCurrent?.start || 0)
-    isAutoHideLabel.value = zoomWidth > currentMinZoomWidth
-  })
+  // chartInstance.on('datazoom', () => {
+  //   const dataZoomCurrent = chartInstance.getOption()?.dataZoom?.[0] // 用getOption获取改变的值
+  //   const zoomWidth = (dataZoomCurrent?.end || 0) - (dataZoomCurrent?.start || 0)
+  //   isAutoHideLabel.value = zoomWidth > currentMinZoomWidth
+  // })
   updateView()
   window.addEventListener('resize', resize)
 })
@@ -329,11 +340,9 @@ onBeforeUnmount(() => {
 .chart-line {
   height: 100%;
   position: relative;
-  overflow: hidden;
 
   .header {
     left: 0;
-    right: 0;
     position: absolute;
     margin: 0 30px 10px 0;
     display: flex;

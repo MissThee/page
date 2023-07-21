@@ -7,36 +7,38 @@
              :class="{
                'row--clickable':props.clickable,
                'row--active':props.clickable && activeId&&activeId===item.id,
-               'row--active--arrow':props.clickable && props.useArrow,
              }"
              :style="{height:rowHeight+'px'}"
              @click="clickHandler(item,index)"
+             @mouseover="(e)=>emits('mouseover',e,item,index)"
+             @mousemove="(e)=>emits('mousemove',e,item,index)"
+             @mouseleave="(e)=>emits('mouseleave',e,item,index)"
         >
           <div class="wrapper">
+            <div :style="{width: checkBoxWidth+'px'}">
+              <el-radio-group :modelValue="!!(props.clickable && activeId&&activeId===item.id)">
+                <el-radio :label="true" style="margin-left: 12px">{{''}}</el-radio>
+              </el-radio-group>
+            </div>
             <div class="label" ref="labelRef" :style="{width:`${labelWidth}px`}">{{ item.name }}</div>
             <div class="line-list"
                  :style="{
                     margin:`${lineMargin}px`,
-                    marginLeft:`${lineMarginLeft+splitLineWidth}px`,
+                    marginLeft:`${lineMarginLeft}px`,
                     marginRight:`${lineMarginRight}px`,
-                    width:`calc((100% - ${labelWidth + splitLineWidth + percentWidth + lineMargin + lineMarginLeft + lineMarginRight}px))`
+                    width:`calc((100% - ${labelWidth + checkBoxWidth + percentWidth + lineMargin + lineMarginLeft + lineMarginRight}px))`
                  }">
               <div class="line"
-                   v-for="key in props.showType==='num'?['positive','neutral','negative']: ['positivePercent','neutralPercent','negativePercent']"
-                   :key="key"
-                   :style="{width:`${(maxValue?item[key]/maxValue:0)*100}%`, backgroundColor:lineColors[key]}">
+                   v-for="settingItem in props.setting.map(e=> ({...e, key:e.key +(props.showType==='num'?'':'Percent')}) )"
+                   :key="settingItem.key"
+                   :style="{width:`${(maxValue?item[settingItem.key]/maxValue:0)*100}%`, backgroundColor:settingItem.color}">
                 <div class="percent" :style="{width:percentWidth+'px',right:-(lineMargin)+'px'}">
-                  <AnimateNumber :duration="300" :num="item[key]" :formatter="percentDigitalFormatter"/>
+                  <AnimateNumber :duration="300" :num="item[settingItem.key]" :formatter="percentDigitalFormatter"/>
                   <span v-if="props.showType!=='num'">%</span>
                 </div>
               </div>
             </div>
           </div>
-          <div v-if="props.useArrow" class="active-arrow"/>
-        </div>
-        <div v-if="splitLineWidth" style="position: absolute;top:0;bottom:0;overflow: hidden" :style="{left: labelWidth+'px',width:splitLineWidth+'px'}">
-          <div style="position: absolute;top:0;bottom:0;right:0;background-color: rgba(0,72,255,0.1);width: 2px"/>
-          <div style="position: absolute;top:0;bottom:0;right:2px;background-color: rgba(0,236,255,0.1);width: 3px"/>
         </div>
       </el-scrollbar>
       <div v-else :style="{backgroundImage:`url('${Assets.emptyData}')`}" class="empty-data"/>
@@ -54,19 +56,17 @@ import AnimateNumber from "@/components/AnimateNum.vue";
 import * as Assets from './assets'
 import {percentDigitalFormatter} from "../../../NumFormatter";
 import {nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
+import {colorNegative, colorNeutral, colorPositive} from "@/components/AnalyzeCharts/ChartColors.ts";
 
 export type GroupProgressData = {
   id: number,
   name: string,
-  positive: number,
-  positivePercent: number,
-  negative: number,
-  negativePercent: number,
-  neutral: number,
-  neutralPercent: number,
+  [key: string]: number
 }
 
+
 const props = withDefaults(defineProps<{
+  setting: { key: string, name: string, color: string }[],
   activeId?: number,
   data: GroupProgressData[]
   useArrow?: boolean
@@ -75,12 +75,15 @@ const props = withDefaults(defineProps<{
   scrollHeight?: number | { min: number, max: number, rowNum?: number }
 }>(), {
   data: () => [],
+  setting: () => [],
   clickable: true,
   scrollHeight: undefined
 })
-const splitLineWidth = 0
-const rowHeight = 44
-const labelWidth = ref(72)
+const rowHeight = 73
+const labelWidthMin = 60
+const labelWidthMax = 120
+const labelWidth = ref(labelWidthMin)
+const checkBoxWidth = 26
 const percentWidth = 35
 const lineMargin = 4
 const lineMarginLeft = lineMargin
@@ -92,23 +95,10 @@ let dataOldLength = 0
 let setDataTimer = null
 const mainPanelRef = ref()
 
-const lineColors = {
-  negative: '#ECB73F',
-  negativePercent: '#ECB73F',
-  positive: '#466AF2',
-  positivePercent: '#466AF2',
-  neutral: '#CFCFCF',
-  neutralPercent: '#CFCFCF',
-}
-
 const getMaxLineValue = (dataArr: GroupProgressData[]) => {
-  if (props.showType === 'num') {
-    return dataArr.reduce((m, item) => Math.max(item.negative, item.positive, item.neutral, m), 0)
-  } else {
-    return dataArr.reduce((m, item) => Math.max(item.negativePercent, item.positivePercent, item.neutralPercent, m), 0)
-  }
+  return dataArr.reduce((m, item) => Math.max(...props.setting.map(e => item[e.key + (props.showType === 'num' ? '' : 'Percent')]), m), 0)
 }
-const emits = defineEmits(['click'])
+const emits = defineEmits(['click', 'mouseover', 'mouseleave', 'mousemove'])
 const clickHandler = (item, index) => {
   if (props.clickable) {
     emits('click', item, index)
@@ -123,13 +113,13 @@ const updateLabelWidth = () => {
         if (encodeURI(e.name.charAt(i)).length === 9) {
           labelLength += 18 // 中文宽度
         } else {
-          labelLength += 10
+          labelLength += 11
         }
       }
       labelWidth.value = Math.max(labelWidth.value, labelLength)
     })
-    labelWidth.value = Math.min(labelWidth.value, (mainPanelRef.value.getBoundingClientRect().width / 5 * 2) || 120)
-    labelWidth.value = Math.max(100, labelWidth.value)
+    labelWidth.value = Math.min(labelWidth.value, (mainPanelRef.value.getBoundingClientRect().width / 5 * 2) || labelWidthMax)
+    labelWidth.value = Math.max(labelWidthMin, labelWidth.value)
   })
 }
 
@@ -234,12 +224,11 @@ onBeforeUnmount(() => {
         min-height: 100%;
         display: flex;
         flex-direction: column;
-        justify-content: space-around;
+        justify-content: center; // 未填满时，行的分布方式
       }
     }
 
     .row {
-      border-radius: 6px;
       margin-right: 10px;
       position: relative;
       white-space: nowrap;
@@ -254,64 +243,11 @@ onBeforeUnmount(() => {
       }
 
       &:hover {
-        background-color: var(--el-color-primary-light-9);
-
-        .active-arrow {
-          &:before, &:after {
-            background-color: var(--el-color-primary-light-9);
-          }
-        }
+        background-color: #F5F7FC;
       }
 
       &--active {
-        @active-border-color: rgba(0, 117, 255, 0.4);
-        border: 2px solid @active-border-color;
-        box-shadow: 0 0 6px 0 rgba(48, 48, 48, 0.2);
-        border-radius: 6px;
-
-        &--arrow {
-          border-radius: 6px 2px 2px 6px;
-        }
-
-        .active-arrow {
-          width: 0;
-          position: absolute;
-          right: 0;
-          top: 0;
-          bottom: 0;
-
-          &:before {
-            box-shadow: 4px 0 5px 0 rgba(66, 99, 221, 0.18);
-            top: -1px;
-            right: -2px;
-            position: absolute;
-            content: ' ';
-            display: inline-block;
-            border-right: 2px solid @active-border-color;
-            height: 60%;
-            width: 15px;
-            background-color: white;
-            transform-origin: 100% 0;
-            transform: rotate(-20deg);
-            border-radius: 0 0 4px 100%;
-          }
-
-          &:after {
-            box-shadow: 4px 0 5px 0 rgba(66, 99, 221, 0.18);
-            bottom: -1px;
-            right: -2px;
-            position: absolute;
-            content: ' ';
-            display: inline-block;
-            border-right: 2px solid @active-border-color;
-            height: 60%;
-            width: 15px;
-            background-color: white;
-            transform-origin: 100% 100%;
-            transform: rotate(20deg);
-            border-radius: 100% 8px 0 0;
-          }
-        }
+        background-color: #F5F7FC;
       }
 
       .wrapper {
@@ -338,7 +274,7 @@ onBeforeUnmount(() => {
           //font-weight: 600;
           color: #333;
           line-height: 1.2em;
-          background-color: #f3f3f3;
+          //background-color: #f3f3f3;
           border-radius: 6px;
         }
 
@@ -349,11 +285,11 @@ onBeforeUnmount(() => {
             width: 0;
             transition: all 0.3s ease-out;
             position: relative;
-            height: 9px;
+            height: 16px;
             vertical-align: middle;
             font-size: inherit;
             margin-bottom: 2px;
-            border-radius: 0 10px 10px 0;
+            //border-radius: 0 10px 10px 0;
 
             &:last-child {
               margin: 0;
