@@ -49,23 +49,30 @@
             </el-icon>
           </div>
         </el-scrollbar>
-        <el-pagination v-if="getIsShowPagerInColumn(column,columnIndex) && cascadePageInfo[columnIndex].total && cascadePageInfo[columnIndex].total>cascadePageInfo[columnIndex].size"
-                       class="pager"
-                       layout="prev,slot,next"
-                       v-model:current-page="cascadePageInfo[columnIndex].page"
-                       :page-size="cascadePageInfo[columnIndex].size"
-                       :total="cascadePageInfo[columnIndex].total"
-                       @current-change="pageChangeHandler(column,columnIndex)"
+        <el-pagination
+            v-if="getIsShowPagerInColumn(column,columnIndex) &&cascadePageInfo[columnIndex] && cascadePageInfo[columnIndex].total && cascadePageInfo[columnIndex].total>cascadePageInfo[columnIndex].size"
+            class="pager"
+            layout="prev,slot,next"
+            v-model:current-page="cascadePageInfo[columnIndex].page"
+            :page-size="cascadePageInfo[columnIndex].size"
+            :total="cascadePageInfo[columnIndex].total"
+            @current-change="pageChangeHandler(column,columnIndex)"
         >
-          <div>{{ cascadePageInfo[columnIndex].page }}/{{ Math.ceil(cascadePageInfo[columnIndex].total / cascadePageInfo[columnIndex].size) }}</div>
+          <div>{{
+              cascadePageInfo[columnIndex].page
+            }}/{{ Math.ceil(cascadePageInfo[columnIndex].total / cascadePageInfo[columnIndex].size) }}
+          </div>
         </el-pagination>
       </div>
       <div v-if="filterStr&&!dataForColumns?.[0]?.length" class="tip-text">无匹配数据</div>
     </div>
     <!--  站位，el-selet组件无任何el-option时，下拉不显示内容，用此站位  -->
-    <el-option value="" label="" v-if="filterStr || dataForColumns?.[0]?.length" style="display: none !important;" v-show="false"/>
+    <el-option value="" label="" v-if="filterStr || dataForColumns?.[0]?.length" style="display: none !important;"
+               v-show="false"/>
     <!--  将选中的选项加入到原列表，并隐藏下拉选项，让原选择组件可现实选中项目名称。(最优解是完全不渲染这些节点，但现在没找到方法，只能将选中的一部分渲染)  -->
-    <el-option v-for="item in dataPlain.filter(e=>Array.isArray(activeId) ? activeId.includes(e.id) : activeId === e.id)" :key="item.id" :value="item.id" :label="item.name" style="display: none !important;" v-show="false"/>
+    <el-option
+        v-for="item in dataPlain.filter(e=>Array.isArray(activeId) ? activeId.includes(e.id) : activeId === e.id)"
+        :key="item.id" :value="item.id" :label="item.name" style="display: none !important;" v-show="false"/>
   </el-select>
 </template>
 <script lang="ts">
@@ -296,7 +303,7 @@ const getColumnPageData = (column: CascaderSelectorData[], columnIndex: number) 
     cascadePageInfo.value[columnIndex].size = defaultPageSize
     cascadePageInfo.value[columnIndex].total = column?.length || 0
     const sliceStart = (cascadePageInfo.value[columnIndex].page - 1) * cascadePageInfo.value[columnIndex].size
-    return column.slice(sliceStart, sliceStart + cascadePageInfo.value[columnIndex].size)
+    return column.slice(sliceStart, sliceStart + cascadePageInfo.value[columnIndex].size) || []
   } else {
     return column
   }
@@ -363,11 +370,15 @@ const filterDataByStr = (data: CascaderSelectorData[], keyword = '', result: Cas
 }
 
 watch(() => filterStr.value, (val) => {
-  dataForColumns.value = [filterDataByStr(JSON.parse(JSON.stringify(initialedData)), val)].filter(e => e?.length)
-  let columnIndex = 0
-  while (dataForColumns.value[columnIndex]?.[0]?.children?.length) {
-    hoverHandler(dataForColumns.value[columnIndex]?.[0], columnIndex, true, true)
-    columnIndex++
+  if (!val) {
+    dataForColumns.value = [JSON.parse(JSON.stringify(initialedData))]
+  } else {
+    dataForColumns.value = [filterDataByStr(JSON.parse(JSON.stringify(initialedData)), val)].filter(e => e?.length)
+    let columnIndex = 0
+    while (dataForColumns.value[columnIndex]?.[0]?.children?.length) {
+      hoverHandler(dataForColumns.value[columnIndex]?.[0], columnIndex, true, true)
+      columnIndex++
+    }
   }
 }, {immediate: true})
 </script>
