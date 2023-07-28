@@ -151,6 +151,7 @@ watch(() => props.modelValue, () => { // 绑定值改变时触发
 watch(() => JSON.stringify(props.data || []), (val) => { // 数据改变时触发
   initialedData = JSON.parse(val) as CascaderSelectorData[]
   dataPlain.value = []
+  expandIds.value.length=0
   initTreeData(initialedData)
   dataForColumns.value = [initialedData].filter(e => e?.length)
   cascadePageInfo.value = [{page: 1, size: defaultPageSize, total: dataForColumns.value[0]?.length || 0}]
@@ -380,6 +381,8 @@ watch(() => filterStr.value, (val) => {
       columnIndex++
     }
   }
+  // 更新下拉框位置
+  selectRef.value?.tooltipRef?.updatePopper?.()
 }, {immediate: true})
 </script>
 
