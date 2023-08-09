@@ -3,7 +3,7 @@
 		class="address-auto-complete"
 		v-model="placeData.value"
 		:fetch-suggestions="cityAreaAutoSearch"
-		placeholder="请输入"
+		:placeholder="props.placeholder||'请输入'"
 		@select="cityAreaCompleteSelectHandler"
 		@blur="cityAreaCompleteBlurHandler"
 		@change="cityAreaCompleteChangeHandler"
@@ -13,17 +13,32 @@
 </template>
 
 <script lang="ts" setup>
+import axios, {AxiosResponse} from "axios";
+
 export interface AreaItem {
 	value: string,
 	lng?: number,
 	lat?: number
 }
-
+interface AMapSearchResponse extends AxiosResponse {
+	data: {
+		status: string
+		info: string,
+		tips: {
+			id: string,
+			name: string,
+			district: string,
+			address: string | [],
+			location: string | []
+		}[]
+	}
+}
 // 地址补全
 import { ref, defineProps, defineEmits, PropType, watch } from "vue";
 
 const props = defineProps({
 	searchCity: String,
+	placeholder:String,
 	modelValue: Object as PropType<AreaItem>,
 	autoSize: Boolean
 });
@@ -36,42 +51,47 @@ watch(() => props.modelValue, (newVal) => {
 
 let cityAreaSelectedItem: AreaItem | undefined = undefined; // 当前选中的地址项
 let cityAreaFirstItem: AreaItem | undefined = undefined; // 当前提示列表第一项
-const AMap = (window as any).AMap;
+
 const cityAreaAutoSearch = (queryString: string, cb: any) => {
 	if (!queryString.trim()) {
 		cityAreaFirstItem = undefined;
 		cb([]);
 	} else {
-		AMap.plugin("AMap.AutoComplete", () => {
-			// console.log("搜索城市",  props.searchCity);
-			const autoComplete = new AMap.AutoComplete({ city: props.searchCity || "全国" });
-			autoComplete.search(queryString.trim(), function(status: string, result: { info: string, tips: { id: string, name: string, district: string, location: { lng: number, lat: number } }[] }) {
-				if (status === "complete" && result?.info === "OK") {
-					const resultList = result.tips
-						.filter(e => e.location)// 过滤掉没有经纬度的
-						.map(e => {
-							// 将描述和名字中间重复的文字剔除，构建选项列表
-							let districtCutIndex = null;
-							for (let i = Math.min(e.district.length, e.name.length); i > 0; i--) {
-								const suffixText = e.name.substring(0, i);
-								if (e.district.endsWith(suffixText)) {
-									districtCutIndex = i;
-								}
+		axios.get(`https://restapi.amap.com/v3/assistant/inputtips`, {params: {
+				key: (window as any)._AMapWebServiceKey,
+				city: props.searchCity || "全国",
+				keywords: queryString.trim(),
+			}}).then((res: AMapSearchResponse) => {
+			if (res.data?.status === '1') {
+				const resultList = res.data.tips
+					.filter(e => typeof e.location === 'string' && !Number.isNaN(Number(e.location.split(',')[0])) && !Number.isNaN(Number(e.location.split(',')[1])))// 过滤掉没有经纬度的
+					.filter(e => typeof e.address === 'string')
+					.map(e => {
+						// 将描述和名字中间重复的文字剔除，构建选项列表
+						let districtCutIndex = null;
+						for (let i = Math.min(e.district.length, e.name.length); i > 0; i--) {
+							const suffixText = e.name.substring(0, i);
+							if (e.district.endsWith(suffixText)) {
+								districtCutIndex = i;
 							}
-							// console.log(e.district, e.name);
-							const valueTmp = districtCutIndex === null ? (e.district + e.name) : (e.district + e.name.substring(districtCutIndex));
-							return {
-								id: e.id,
-								value: valueTmp,
-								lng: e.location.lng,
-								lat: e.location.lat
-							};
-						});
-					cityAreaFirstItem = resultList[0];
-					cb(resultList);
-				}
-			});
-		});
+						}
+						// console.log(e.district, e.name);
+						const valueTmp = districtCutIndex === null ? (e.district + e.name) : (e.district + e.name.substring(districtCutIndex));
+						return {
+							id: e.id,
+							value: valueTmp,
+							lng: Number((e.location as string).split(',')[0]),
+							lat: Number((e.location as string).split(',')[1]),
+						};
+					});
+				cityAreaFirstItem = resultList[0];
+				cb(resultList);
+			} else {
+				cityAreaFirstItem = undefined;
+				cb([])
+				console.error('高德地图查询失败 ' + res.data?.info)
+			}
+		})
 	}
 };
 const emit = defineEmits(["update:modelValue"]);

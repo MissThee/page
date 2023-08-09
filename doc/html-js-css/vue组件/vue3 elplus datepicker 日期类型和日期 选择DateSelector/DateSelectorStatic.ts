@@ -58,7 +58,8 @@ export const getWeekInYear = (dt: Date): { year: number, week: number } => {
 // console.log('52', getWeekInYear(new Date('2019-12-31')))
 // console.log('52', getWeekInYear(new Date('2020-01-01')))
 // console.log('1', getWeekInYear(new Date('2020-01-06')))
-// 传入时间类型，获取对应的默认值。
+// 传入时间类型，获取对应的默认值。默认按昨日日期计算结果。
+// date 为使用指定时间计算结果
 export const getParamByDateType = (dateType: DateType, date?: Date, needAuxiliaryParam = false): DateSelectorRes => {
   const btnTmp = btnDate.find(e => e.type === dateType)
   if (!btnTmp) {
@@ -116,7 +117,7 @@ export const getParamByDateType = (dateType: DateType, date?: Date, needAuxiliar
 
 // 使用参数获取时间对应的文字
 // 如
-// 日 {time_cycle: 1, time_value: '2023-05-11'} => 2023年5月11
+// 日 {time_cycle: 1, time_value: '2023-05-11'} => 2023年5月11日
 // 周 {time_cycle: 2, time_value: '2023-19'} => 2023年19周
 // 月 {time_cycle: 3, time_value: '2023-5'} => 2023年5月
 // 季 {time_cycle: 4, time_value: '2023-Q2'} => 2023年2季度

@@ -1,13 +1,13 @@
 <template>
   <div class="date-selector" v-if="dateBtnDataForShow?.length">
-    <div class="btn-wrapper">
+    <div class="btn-wrapper" v-if="props.showType==='button'">
       <div
-        class="active-gb"
-        :class="{
+          class="active-gb"
+          :class="{
           'active-gb--no-trans':dateBtnActiveIndexPre===null,
           'active-gb--inactive':dateBtnActiveIndex===null
         }"
-        :style="{left:`${dateBtnActiveLeftPx}px`}"
+          :style="{left:`${dateBtnActiveLeftPx}px`}"
       >
       </div>
       <span v-for="(dateBtn,index) in dateBtnDataForShow"
@@ -18,38 +18,54 @@
           {{ dateBtn.name }}
       </span>
     </div>
-    <div class="date-picker">
-      <el-popover ref="quarterPopoverRef" v-if="activeBtn.type===DateType.quarter" placement="bottom-end" :width="335" trigger="click" popper-class="dateSelectorPopover">
-        <el-card class="box-card" shadow="never">
-          <template #header>
-            <div class="card-header">
-              <el-link icon="DArrowLeft" @click="dateSelected=dayjs(dateSelected).add(-1,'year').format(dateSelectorValueFormat)"/>
-              <div>{{ dateSelected.substring(0, 4) }}年</div>
-              <el-link icon="DArrowRight" @click="dateSelected=dayjs(dateSelected).add(1,'year').format(dateSelectorValueFormat)"/>
-            </div>
-          </template>
-          <div class="item">
-            <el-button v-for="i in 4"
-                       link
-                       :key="i"
-                       class="quarter-item"
-                       :disabled="disableQuarters(i)"
-                       :class="{
+    <div class="selector-wrapper" v-else-if="props.showType==='select'">
+      <span class="label">时间单位:</span>
+      <el-select v-model="dateBtnActiveIndex"
+                 @change="dateBtnClickHandler(dateBtnDataForShow[dateBtnActiveIndex],dateBtnActiveIndex)">
+        <el-option v-for="(item,index) in dateBtnDataForShow" :key="index" :label="item.name" :value="index"/>
+      </el-select>
+    </div>
+    <div class="selector-wrapper">
+      <span v-if="props.showType==='select'" class="label">选择时间:</span>
+      <div class="date-picker">
+        <el-popover ref="quarterPopoverRef" v-if="activeBtn.type===DateType.quarter" placement="bottom-end" :width="335"
+                    trigger="click" popper-class="dateSelectorPopover">
+          <el-card class="box-card" shadow="never">
+            <template #header>
+              <div class="card-header">
+                <el-link icon="DArrowLeft"
+                         @click="dateSelected=dayjs(dateSelected).add(-1,'year').format(dateSelectorValueFormat)"/>
+                <div>{{ dateSelected.substring(0, 4) }}年</div>
+                <el-link icon="DArrowRight"
+                         @click="dateSelected=dayjs(dateSelected).add(1,'year').format(dateSelectorValueFormat)"/>
+              </div>
+            </template>
+            <div class="item">
+              <el-button v-for="i in 4"
+                         link
+                         :key="i"
+                         class="quarter-item"
+                         :disabled="disableQuarters(i)"
+                         :class="{
                         'quarter-item--active': Math.floor((Number(dateSelected?.split?.('-')[1]-1))/3)+1===i,
                         'quarter-item--disable': disableQuarters(i)
                        }"
-                       @click="()=> { dateChangeHandler(dateSelected.substring(0,4)+'-'+ (i*3-2)+'-01') }">
-              {{ `Q${i}` }}
-            </el-button>
-          </div>
-        </el-card>
-        <template #reference>
-          <el-input :value="dateShowText" readonly prefix-icon="Calendar"/>
-        </template>
-      </el-popover>
-      <div v-else>
-        <el-date-picker ref="dateSelectorRef" :type="activeBtn.pickerType" :clearable="false" :value-format="dateSelectorValueFormat" v-model="dateSelected" @change="dateChangeHandler" :disabled-date="(e)=>e.getTime() >= getYesterday().toDate().getTime()"/>
-        <el-input :value="dateShowText" style="position: absolute;left: 0" readonly prefix-icon="Calendar" @click="weekSelectStartHandler"/>
+                         @click="()=> { dateChangeHandler(dateSelected.substring(0,4)+'-'+ (i*3-2)+'-01') }">
+                {{ `Q${i}` }}
+              </el-button>
+            </div>
+          </el-card>
+          <template #reference>
+            <el-input :value="dateShowText" readonly prefix-icon="Calendar"/>
+          </template>
+        </el-popover>
+        <div v-else>
+          <el-date-picker ref="dateSelectorRef" :type="activeBtn.pickerType" :clearable="false"
+                          :value-format="dateSelectorValueFormat" v-model="dateSelected" @change="dateChangeHandler"
+                          :disabled-date="disabledDateForReport"/>
+          <el-input :value="dateShowText" style="position: absolute;left: 0" readonly prefix-icon="Calendar"
+                    @click="weekSelectStartHandler"/>
+        </div>
       </div>
     </div>
   </div>
@@ -76,12 +92,16 @@ import {ref, watch} from "vue"
 import {DateType, btnDate, BtnData, getParamByDateType, dateSelectorValueFormat} from "./DateSelectorStatic.ts";
 import dayjs from "dayjs";
 import advancedFormat from 'dayjs/plugin/advancedFormat'
+import {disabledDateForReport} from "@/utils/utils.ts";
 
 dayjs.extend(advancedFormat)
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
+  showType?: "select" | 'button'
   enableBtn?: DateType[] // 哪些按钮是可用的，无此参数则都可用
-}>()
+}>(), {
+  showType: 'select'
+})
 
 const getYesterday = () => dayjs().add(-1, 'day')
 
@@ -89,7 +109,7 @@ const dateBtnDataForShow = ref<BtnData[]>([])
 watch(() => props.enableBtn, () => {
   dateBtnDataForShow.value = btnDate.filter(e => props.enableBtn ? props.enableBtn.includes(e.type) : true) || []
 }, {immediate: true, deep: true})
-const emits = defineEmits(["change"])
+const emits = defineEmits(["change", "reset"])
 // 按钮激活背景位置辅助参数
 const dateBtnActiveIndexPre = ref<number | null>(0)
 const dateBtnActiveIndex = ref<number | null>(0)
@@ -102,18 +122,10 @@ const dateSelected = ref<string>(initValue.valueForComponent as string)
 const dateShowText = ref<string>(initValue.textForComponent as string)
 let dateSelectedForRequest = initValue.time_value
 
-const disableQuarters = (index) => {// 季度按钮禁用
-  const dateTmp = getYesterday().toDate()
-  const yearActive = Number(dateSelected.value.substring(0, 4))
-  if (yearActive < dateTmp.getFullYear()) {
-    return false
-  }
-  if (yearActive === dateTmp.getFullYear()) {
-    return index > Math.ceil((dateTmp.getMonth() + 1) / 3)
-  }
-  if (yearActive > dateTmp.getFullYear()) {
-    return true
-  }
+const disableQuarters = (quarterNum: 1 | 2 | 3 | 4) => {// 季度按钮禁用
+  const quarterMonth = (quarterNum - 1) * 3 + 1
+  const quarterDate= dayjs(dateSelected.value.substring(0, 4) + '-' + quarterMonth + '-01').toDate()
+  return disabledDateForReport(quarterDate)
 }
 
 // 按钮切换事件
@@ -159,8 +171,24 @@ const changeEmit = () => {
   emits('change', {time_cycle: activeBtn.value.type, time_value: dateSelectedForRequest})
 }
 
+// 重置为第一个可用按钮的默认值
+const reset = () => {
+  dateBtnActiveIndexPre.value = dateBtnActiveIndex.value
+  dateBtnActiveIndex.value = 0
+  dateBtnActiveLeftPx.value = 0
+  activeBtn.value = dateBtnDataForShow.value[0]
+  dateSelected.value = getYesterday().format(dateSelectorValueFormat)
+  if (!activeBtn.value) {
+    return
+  }
+  const dateTmp = getParamByDateType(activeBtn.value.type, undefined, true)
+  dateSelectedForRequest = dateTmp.time_value
+  dateShowText.value = dateTmp.textForComponent as string
+  emits('reset', {time_cycle: activeBtn.value.type, time_value: dateSelectedForRequest})
+}
+
 const getParams = () => ({time_cycle: activeBtn.value.type, time_value: dateSelectedForRequest})
-defineExpose({getParams})
+defineExpose({getParams, reset})
 
 </script>
 <style scoped lang="less">
@@ -168,6 +196,18 @@ defineExpose({getParams})
   text-align: left;
   display: flex;
   align-items: center;
+
+  .label {
+    white-space: nowrap;
+    margin-right: 5px;
+  }
+
+  .selector-wrapper {
+    display: flex;
+    margin-right: 10px;
+    align-items: center;
+    white-space: nowrap;
+  }
 
   .btn-wrapper {
     box-shadow: 0 0 0 1px var(--el-input-border-color, var(--el-border-color)) inset;
@@ -225,11 +265,18 @@ defineExpose({getParams})
 
   .date-picker {
     position: relative;
+    display: flex;
+    align-items: center;
 
     :deep(.el-input) {
-      width: 160px;
+      width: 100%;
     }
 
+    &--button {
+      :deep(.el-input) {
+        width: 160px;
+      }
+    }
   }
 }
 
