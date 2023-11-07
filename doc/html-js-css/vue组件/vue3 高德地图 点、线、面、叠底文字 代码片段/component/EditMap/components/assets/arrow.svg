@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="31px" height="22px" viewBox="0 0 31 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>修改箭头</title>
+    <defs>
+        <filter x="-6.2%" y="-4.1%" width="112.5%" height="108.1%" filterUnits="objectBoundingBox" id="filter-1">
+            <feOffset dx="0" dy="2" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="4" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0.184313725   0 0 0 0 0.207843137   0 0 0 0 0.278431373  0 0 0 0.16 0" type="matrix" in="shadowBlurOuter1" result="shadowMatrixOuter1"></feColorMatrix>
+            <feMerge>
+                <feMergeNode in="shadowMatrixOuter1"></feMergeNode>
+                <feMergeNode in="SourceGraphic"></feMergeNode>
+            </feMerge>
+        </filter>
+    </defs>
+    <g id="智能排划1.2.2" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="修改记录" transform="translate(-1624.000000, -529.000000)" fill="#5682FF" fill-rule="nonzero">
+            <g id="编组-13" transform="translate(1498.000000, 156.000000)" filter="url(#filter-1)">
+                <g id="编组-14" transform="translate(0.000000, 40.000000)">
+                    <g transform="translate(0.000000, 44.000000)" id="修改箭头">
+                        <path d="M142.622391,296.112216 L134.506973,296.112216 C134.227463,296.112216 134,296.324612 134,296.585606 L134,299.379147 C134,299.640141 134.227463,299.852537 134.506973,299.852537 L142.622391,299.852537 L142.622391,301.762296 C142.622391,301.945892 142.83636,302.05929 143.004066,301.967492 L149.874221,298.203772 C150.041926,298.111974 150.041926,297.886979 149.874221,297.795181 L143.005994,294.033261 C142.83636,293.939663 142.624319,294.05486 142.624319,294.238456 L142.624319,296.112216 L142.622391,296.112216 Z"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
