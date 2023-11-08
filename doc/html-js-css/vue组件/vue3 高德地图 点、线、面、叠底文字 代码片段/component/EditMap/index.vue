@@ -97,7 +97,6 @@ let lineInMap: Record<string, any> = ({})
 let polygonInMap: any[] = []
 const labelsLayerInMap: any = new AMap.LabelsLayer({
   zooms: [3, 20],
-  zIndex: 1,
   collision: false,
 })
 let labelMarkInMap: any[] = []
@@ -271,16 +270,16 @@ const addOptionalChild = (info_arr: any, isGray = false) => {
   return result
 }
 
-interface massMarkData {
+interface MassMarkData {
   lnglat: [number, number],
   style: number,
-  size: number,
-  extData: any
+  _size: number,
+  _extData: any
 }
 
 const setMarkInMap = () => {
   // 处理海量点数据、样式
-  const dataArr: massMarkData[] = [];
+  const dataArr: MassMarkData[] = [];
   const styleArr: { url: string, anchor: any, size: any }[] = []
   pointCurrent.value.forEach((item: any, index: number) => {
     const svgObj = getMarkIcon(item)
@@ -294,33 +293,39 @@ const setMarkInMap = () => {
       styleArr.push(styleTmp)
       existIndex = styleArr.length - 1
     }
-    dataArr.push({lnglat: item.value, style: existIndex, size: svgObj.size, extData: {...item, orderId: index}})
+    dataArr.push({lnglat: item.value, style: existIndex, _size: svgObj.size, _extData: {...item, orderId: index}})
   })
   // 添加海量点
-  massMarkInMap?.setMap(null)
+  // 清理旧覆盖物
+  {
+    massMarkInMap?.setMap(null)
+    massMarkInMap?.clear(null)
+  }
   massMarkInMap = new AMap.MassMarks(
       dataArr,
       {
-        zIndex: 111, 	// 海量点图层叠加的顺序，默认120。这个值在大于等于110时，点会在多边形上面
+        zIndex: 110, 	// 海量点图层叠加的顺序，默认120。这个数值大于等于110时，会在多边形上层，不论多边形zIndex是多少
         style: styleArr,	//多种样式对象的数组
         cursor: 'pointer'
-      });
+      }
+  );
+  console.log('styleArr', styleArr.length)
   massMarkInMap.setMap(mapInstance.value)
   // 海量点交互事件
-  massMarkInMap.on('click', (e: { data: massMarkData }) => {
+  massMarkInMap.on('click', (e: { data: MassMarkData }) => {
     closeOpationalFloatItem()
     setTimeout(() => {
-      const {x, y} = mapInstance.value.lngLatToContainer(e.data.extData.value)
+      const {x, y} = mapInstance.value.lngLatToContainer(e.data._extData.value)
       opationalStyle.left = x
       opationalStyle.top = y
       opationalStyle.isPointMenuShow = true
-      const {service_info_arr = [], is_home, color, is_edited} = e.data.extData
+      const {service_info_arr = [], is_home, color, is_edited} = e.data._extData
 
       let service_info_arr_copy = JSON.parse(JSON.stringify(service_info_arr)) // 获取额外信息
 
       markerDetail.is_edited = is_edited
 
-      const [lng, lat] = e.data.extData.value // 起始点的位置
+      const [lng, lat] = e.data._extData.value // 起始点的位置
 
       currentLngLat.lng = lng
       currentLngLat.lat = lat
@@ -356,9 +361,9 @@ const setMarkInMap = () => {
       }
     })
   })
-  massMarkInMap.on('mouseover', (e: { data: massMarkData }) => {
+  massMarkInMap.on('mouseover', (e: { data: MassMarkData }) => {
     polygonInMap.forEach((po: any) => {
-      if (po.contains(e.data.extData.value)) {
+      if (po.contains(e.data._extData.value)) {
         activePolygonKey.value = getActivePolygonKeyByExtData(po.getExtData())
       }
     })
@@ -368,6 +373,7 @@ const setMarkInMap = () => {
 const setLineInMap = () => {
   Object.keys(lineInMap).forEach(key => {
     lineInMap[key]?.setMap(null)
+    lineInMap[key]?.destroy()
   })
   lineInMap = {}
   Object.keys(moveLinesCurrent.value).forEach((key, index) => {
@@ -383,7 +389,7 @@ const setLineInMap = () => {
         lineJoin: 'round',
         extData: {orderId: index},
         bubble: true,
-        zIndex: 110 // 这个值大于等于109时，线会在多边形之上
+        zIndex: 120, // 这个值大于等于多边形的zIndex，会在多边形上层。当线与海量点在多边形的同一侧时，线总是会显示在点下层
       })
     }
   })
@@ -403,12 +409,16 @@ const highlightHoverPolygon = () => {
 }
 const setPolygonInMap = () => {
   // ------------添加面------------
-  polygonInMap.forEach(e => {
-    e.setMap(null)
+  polygonInMap.forEach(p => {
+    // 清理旧覆盖物
+    p.setMap(null)
+    p.destroy()
   })
   polygonInMap = []
-  labelMarkInMap = []
+  // 清理旧覆盖物
   labelsLayerInMap.clear()
+  labelMarkInMap = []
+
   polygonCurrent.value.forEach((e: any) => {
     // -------处理面-------
     const polygon = new AMap.Polygon({
@@ -427,7 +437,7 @@ const setPolygonInMap = () => {
         regionShow: e.region_show
       },
       bubble: true,
-      zIndex: 100, // 点和线相对于多边形层级的高低数值不同，这里随便给个值，需要调整点、线、面谁在上层，去调整点和线的zIndex
+      zIndex: 120, //
     });
     setPolygonStyle(polygon)
     polygonInMap.push(polygon)
@@ -499,15 +509,9 @@ const polygonNameLabelsLayer = () => {
 
   mapInstance.value.on('zoomchange', () => {
     labelMarkInMap.forEach(({labelMarker, size}) => {
-      labelMarker.setText({
-        style: {
-          fontSize: size * (mapInstance.value?.getZoom() || 1),
-          fontWeight: 'bold',
-          direction: 'center',
-          fontFamily: 'SimHei, 黑体, sans-serif',
-          fillColor: 'rgba(0,0,0,0.3)'
-        }
-      })
+      const newStyle = labelMarker.getText()
+      newStyle.style.fontSize = size * (mapInstance.value?.getZoom() || 1)
+      labelMarker.setText(newStyle)
     })
   })
 }
