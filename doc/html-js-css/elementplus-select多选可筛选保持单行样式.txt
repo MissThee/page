@@ -1,0 +1,39 @@
+.one-row-select {// el-select多选可搜索、折叠选项。保持单行样式调整 elementPlus@2.3.4
+    :deep {
+      .el-select__tags {
+        display: flex;
+        flex-wrap: nowrap;
+
+        .el-select-tags-wrapper {
+          display: flex;
+          flex-wrap: nowrap;
+          max-width: calc(100% - 10px);
+          flex-shrink: 1;
+
+          .el-tag.is-closable {
+            display: flex;
+            flex: 1;
+            min-width: 0;
+          }
+
+          .el-tag__content {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+            .el-select__tags-text {
+              width: 100%;
+            }
+          }
+
+        }
+
+        .el-select__input {
+          flex: 1;
+          margin-left: 0;
+          min-width: 0;
+        }
+      }
+    }
+  }
